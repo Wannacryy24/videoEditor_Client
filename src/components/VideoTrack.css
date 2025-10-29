@@ -1,0 +1,124 @@
+.video-track-root {
+  position: relative;
+  background: #071017;
+  color: #fff;
+  padding: 8px;
+  border-radius: 6px;
+  overflow-x: auto;
+  height: 30vh;
+}
+
+.video-track-ruler {
+  position: relative;
+  height: 60px;
+  margin-bottom: 6px;
+}
+
+.ruler-tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-0.5px);
+  width: 1px;
+}
+.ruler-tick .tick-line {
+  width: 1px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  margin: 14px auto 0;
+}
+.ruler-tick .tick-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  margin-top: 2px;
+}
+
+.video-track-row {
+  position: relative;
+  min-height: 80px;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  transition: filter 0.2s ease, background 0.2s ease, border 0.2s ease;
+}
+
+.clip-block {
+  height: 64px;
+  border-radius: 6px;
+  background: #171a1f;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4) inset;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  box-sizing: border-box;
+}
+
+/* Highlight when selected */
+.clip-block.selected {
+  border: 2px solid #facc15; /* yellow */
+  border-radius: 6px;
+}
+
+/* Handles for trimming */
+.resize-handle {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  background: #facc15;
+  cursor: ew-resize;
+  z-index: 5;
+}
+.resize-handle.left {
+  left: -2px; /* stick out slightly */
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+.resize-handle.right {
+  right: -2px;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+/* Thumbnails */
+.clip-thumb-tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Loading shimmer for thumbs */
+.clip-thumb-tile.loading {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 25%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.1) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Drag-over styles */
+.video-track-row.drag-over {
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px dashed rgba(255, 100, 100, 0.6);
+}
+.create-track-dropzone {
+  margin-top: 12px;
+  padding: 16px;
+  text-align: center;
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #aaa;
+  transition: filter 0.2s ease, background 0.2s ease, border 0.2s ease, color 0.2s ease;
+}
+.create-track-dropzone.drag-over {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: #ff5555;
+  color: #fff;
+}

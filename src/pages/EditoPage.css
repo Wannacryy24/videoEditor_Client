@@ -1,0 +1,68 @@
+/* this is from editor component */
+.editor-page-main-div {
+    margin: 0;
+    height: 90vh;
+}
+
+.editor-controls-and-preview {
+    width: 100%;
+    max-height: 100%;
+    display: flex;
+    flex-direction: row;
+    overflow: auto;
+}
+
+.editor-controls-div {
+    border-right: 3px solid black;
+    padding-left: 10px;
+    max-width: 15vw;
+    height: 90vh;
+    overflow: auto;
+    background-color: #0A1220;
+    color: white;
+    border-radius: 6px ;
+}
+
+/* this class is in videoPreview component */
+.video-preview {
+    background-color: #0A1220;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border-radius: 6px;
+}
+
+.Video-Timeline {
+    position: absolute;
+    bottom: 2vh;
+}
+
+
+.video-preview-inner-div p {
+    max-width: 50%;
+    color: white;
+}
+
+.video-preview-inner-div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* centers horizontally */
+    justify-content: center;
+    /* centers vertically inside the inner area if you want */
+    gap: 0.5rem;
+    width: auto;
+    /* don't force full-width */
+    max-width: 100%;
+    /* safe limit on small screens */
+    height: 50vh;
+}
+
+.video-preview-inner-div video {
+    max-width: 100%;
+    width: 360px;
+    /* keep the intended size */
+    height: auto;
+    display: block;
+}

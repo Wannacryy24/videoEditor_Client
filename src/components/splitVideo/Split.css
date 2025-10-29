@@ -1,0 +1,101 @@
+.split-container {
+  display: flex;
+  flex-direction: column;
+  background: rgba(24, 24, 24, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  color: #fff;
+  width: 320px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.split-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.split-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin: 0;
+}
+
+.split-icon {
+  color: #b56cf5;
+  font-size: 22px;
+}
+
+.split-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.split-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.split-input-group label {
+  font-size: 13px;
+  color: #aaa;
+}
+
+.split-input-group select {
+  background: #1d1d1d;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 8px;
+  color: #fff;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.split-input-group select:hover {
+  border-color: #6a40f8;
+}
+
+.split-input-group input[type="range"] {
+  width: 100%;
+  accent-color: #9b51e0;
+  height: 4px;
+  cursor: pointer;
+}
+
+.split-duration-value {
+  font-size: 13px;
+  color: #ccc;
+  text-align: right;
+  margin-top: -4px;
+}
+
+.split-btn {
+  background: linear-gradient(135deg, #9b51e0, #6a40f8);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 0;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  letter-spacing: 0.3px;
+}
+
+.split-btn:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #b56cf5, #8058ff);
+  box-shadow: 0 4px 10px rgba(155, 81, 224, 0.4);
+}
+
+.split-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #333;
+}

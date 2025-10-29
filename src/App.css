@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+*{
+    margin: 0;
+    padding: 0;
+    text-decoration: none;
+    font-family: "Barlow", sans-serif;
+}
+
+/* ===== Global Styles ===== */
+
+:root {
+  /* Brand Colors */
+  --color-primary: #6c63ff;  /* purple highlight */
+  --color-primary-dark: #574bff;
+  --color-secondary: #0099ff;
+  --color-bg: #f9f9fb;
+  --color-text: #111;
+  --color-text-light: #555;
+
+  /* Spacing */
+  --spacing-section: 60px;
+  --radius: 12px;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+  background-color: #ECEEEE;
+}
+
+
+td{
+    border: 1px solid black;
+}

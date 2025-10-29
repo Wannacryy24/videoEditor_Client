@@ -1,0 +1,249 @@
+/* ========== Root Layout ========== */
+.capcut-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #111;
+  color: #fff;
+  font-family: "Inter", sans-serif;
+}
+
+/* Sidebar + main content */
+.capcut-main {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+/* Main content area (dock + canvas + timeline) */
+.capcut-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========== Top Toolbar ========== */
+.topbar {
+  height: 50px;
+  background: #181818;
+  border-bottom: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.project-title {
+  font-weight: 600;
+  color: #ccc;
+  font-size: 15px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.top-btn {
+  background: transparent;
+  border: none;
+  color: #bbb;
+  font-size: 16px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.top-btn:hover {
+  color: #fff;
+}
+
+.export-btn {
+  background: #6a40f8;
+  border: none;
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s ease-in-out;
+}
+
+.export-btn:hover {
+  background: #7c56ff;
+}
+
+/* ========== Sidebar ========== */
+.sidebar-compact {
+  width: 60px;
+  background: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 10px;
+  border-right: 1px solid #333;
+  position: relative;
+}
+
+.sidebar-icon {
+  width: 40px;
+  height: 40px;
+  margin: 10px 0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #bbb;
+  position: relative;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-icon.active,
+.sidebar-icon:hover {
+  background: #333;
+  color: #fff;
+}
+
+.tooltip {
+  position: absolute;
+  left: 60px;
+  background: #222;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.sidebar-icon:hover .tooltip {
+  opacity: 1;
+}
+
+/* ➕ Add new media button at top of sidebar */
+.sidebar-add-btn {
+  background: #6a40f8;
+  border: none;
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  font-size: 20px;
+  transition: all 0.2s ease-in-out;
+}
+
+.sidebar-add-btn:hover {
+  background: #7c56ff;
+  transform: scale(1.1);
+}
+
+/* ========== Workspace (Dock + Canvas) ========== */
+.capcut-workspace {
+  height: 60vh; /* ~60% of viewport */
+  display: flex;
+  overflow: hidden;
+  transition: height 0.25s ease-in-out;
+}
+
+/* Dock Panel (Left Controls Area) */
+.dock-panel {
+  min-width: 320px;
+  width: 25vw;
+  max-width: 30vw;
+  background: #181818;
+  padding: 16px;
+  overflow-y: auto;
+  border-right: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  scrollbar-width: thin;
+  scrollbar-color: #333 #181818;
+}
+
+.dock-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dock-panel::-webkit-scrollbar-thumb {
+  background-color: #333;
+  border-radius: 3px;
+}
+
+/* Canvas (Preview Area) */
+.capcut-canvas {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  border-left: 1px solid #222;
+  border-right: 1px solid #222;
+}
+
+/* ========== Timeline Section ========== */
+.capcut-timeline {
+  height: 20vh;
+  background: #151515;
+  border-top: 1px solid #333;
+  width: 100%;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+.timeline-header {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 8px;
+}
+
+.timeline-content {
+  height: 100%;
+  background: #1a1a1a;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+/* ========== Placeholders and Misc ========== */
+.tool-placeholder {
+  padding: 20px;
+  color: #888;
+  text-align: center;
+  background: #1a1a1a;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 280px;
+}
+
+h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ccc;
+  margin-bottom: 12px;
+}
+
+/* Subtle fade animation for transitions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease forwards;
+}

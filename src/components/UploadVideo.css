@@ -1,0 +1,52 @@
+/* src/components/UploadVideo.css */
+
+.upload-container {
+  max-width: 1200px;
+  min-height: 60vh;
+  margin: 0 auto;
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+.upload-container h1 {
+  margin-bottom: 20px;
+  font-size: 2rem;
+  color: #333;
+}
+
+.upload-dropzone {
+    height: 60vh;
+  border: 2px dashed #aaa;
+  padding: 40px;
+  cursor: pointer;
+  transition: background-color 0.3s, border-color 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-dropzone img {
+  max-width: 100px;
+  margin-bottom: 10px;
+}
+
+.upload-dropzone p {
+  font-size: 1rem;
+  color: #666;
+  margin: 0;
+}
+
+.upload-dropzone.dragover {
+  background-color: #f0f0f0;
+  border-color: #888;
+}
+
+#videoInput {
+  display: none;
+}
+
+.upload-dropzone p{
+    font-size: 2rem;
+    font-weight: 600;
+}

@@ -1,0 +1,19 @@
+.demo {
+  padding: 96px 24px; /* py-24 px-6 */
+  text-align: center;
+}
+
+.demo-title {
+  font-size: 2.25rem; /* text-4xl */
+  font-weight: bold;
+  margin-bottom: 48px; /* mb-12 */
+}
+
+.demo-video {
+  display: block;
+  margin: 0 auto;
+  border-radius: 24px; /* rounded-2xl */
+  box-shadow: 0 20px 30px rgba(0,0,0,0.15); /* shadow-xl */
+  max-width: 1024px; /* max-w-4xl */
+  width: 100%;
+}

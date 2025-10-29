@@ -1,0 +1,23 @@
+.footer {
+  padding: 32px 24px; /* py-8 px-6 */
+  background-color: #111827; /* gray-900 */
+  color: white;
+  text-align: center;
+}
+
+.footer-links {
+  margin-top: 16px; /* mt-4 */
+  display: flex;
+  justify-content: center;
+  gap: 24px; /* gap-6 */
+}
+
+.footer-links a {
+  color: white;
+  text-decoration: none;
+  transition: text-decoration 0.3s;
+}
+
+.footer-links a:hover {
+  text-decoration: underline;
+}

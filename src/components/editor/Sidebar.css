@@ -1,0 +1,80 @@
+.sidebar {
+  width: 72px;
+  background: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 16px;
+  border-right: 1px solid #333;
+  position: relative;
+}
+
+/* + Add Button */
+.sidebar-add {
+  width: 48px;
+  height: 48px;
+  background: #007bff;
+  border-radius: 50%;
+  color: white;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: all 0.25s ease-in-out;
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.4);
+}
+
+.sidebar-add:hover {
+  transform: scale(1.1);
+  background: #2196f3;
+}
+
+/* Icon list */
+.sidebar-icons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  font-size: 18px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.sidebar-icon.active,
+.sidebar-icon:hover {
+  background: #333;
+  color: #fff;
+}
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  left: 70px;
+  background: #222;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+  z-index: 1;
+}
+
+.sidebar-icon:hover .tooltip {
+  opacity: 1;
+}

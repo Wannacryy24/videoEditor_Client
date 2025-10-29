@@ -1,0 +1,57 @@
+.editor-layout {
+  display: flex;
+  height: 100vh;
+  background: #121212;
+  color: white;
+}
+
+.editor-main {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.editor-top {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.video-preview {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-right: 1px solid #333;
+  background: #000;
+}
+
+.tool-panel {
+  width: 500px;
+  min-width: 420px;
+  padding: 20px;
+  background: #181818;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.tool-header {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ccc;
+  margin-bottom: 12px;
+}
+
+.tool-placeholder {
+  padding: 20px;
+  color: #888;
+  text-align: center;
+}
+
+.editor-timeline {
+  height: 180px;
+  background: #0f0f0f;
+  border-top: 1px solid #333;
+}

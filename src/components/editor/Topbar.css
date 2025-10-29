@@ -1,0 +1,50 @@
+.topbar {
+  height: 50px;
+  background: #181818;
+  border-bottom: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.top-btn {
+  background: transparent;
+  border: none;
+  color: #bbb;
+  font-size: 16px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.top-btn:hover {
+  color: #fff;
+}
+
+.export-btn {
+  background: #6a40f8;
+  border: none;
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.export-btn:hover {
+  background: #7c56ff;
+}
+
+.topbar-icon-premium {
+  color: gold;
+  font-size: 18px;
+}

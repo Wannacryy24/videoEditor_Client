@@ -1,0 +1,16 @@
+.login-div{
+    display: flex;
+    width: 10vw;
+    height: 6vh;
+    align-items: center;
+    justify-content: space-around;   
+}
+
+.login-div img{
+    height: 80%;
+    border-radius: 30px;
+}
+
+.login-div button{
+    cursor: pointer;
+}
