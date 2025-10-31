@@ -23,7 +23,6 @@ class AudioEngine {
     this.masterGain.gain.setValueAtTime(1, this.ctx.currentTime);
     this.masterGain.connect(this.ctx.destination);
     this._isInitialized = true;
-    // console.log("AudioEngine initialized");
   }
 
   async resumeOnUserGesture() {
@@ -41,19 +40,22 @@ class AudioEngine {
     }
   }
 
-  async addTrack(id, src, { start = 0, end = null, volume = 1, muted = false, loop = false } = {}) {
+  async addTrack(id, src, { start = 0, end = null, volume = 1, muted = false, loop = false, audioUrl = null } = {}) {
     this.init();
     if (!this.ctx) return;
 
     if (this.tracks.has(id)) this.removeTrack(id);
 
+    // ✅ USE BACKEND EXTRACTED AUDIO
+    const audioSource = audioUrl || src;
+    
+    console.log(`🎵 AudioEngine: Loading ${audioUrl ? 'EXTRACTED' : 'ORIGINAL'} audio for: ${id}`);
+
     const audioEl = new Audio();
-    audioEl.src = src;
+    audioEl.src = audioSource;
     audioEl.crossOrigin = "anonymous";
     audioEl.preload = "auto";
     audioEl.loop = !!loop;
-
-    // Important: output comes from WebAudio, but keeping audioEl unmuted helps some devices initialize pipeline reliably.
     audioEl.muted = false;
     audioEl.volume = 1;
 
@@ -75,6 +77,21 @@ class AudioEngine {
       muted,
       loop,
       playing: false,
+      audioSource: audioUrl ? 'extracted' : 'original'
+    });
+  }
+
+  // Debug method to check audio sources
+  debugAudioSources() {
+    console.log("🔊 AUDIO SOURCES DEBUG:");
+    this.tracks.forEach((track, id) => {
+      console.log(`Track ${id}:`, {
+        audioSource: track.audioSource,
+        src: track.audioEl.src,
+        duration: track.audioEl.duration,
+        readyState: track.audioEl.readyState,
+        playing: track.playing
+      });
     });
   }
 
@@ -82,8 +99,15 @@ class AudioEngine {
     this.init();
     if (!this.ctx) return;
 
+    // ✅ DEBUG: See what's playing
+    this.debugAudioSources();
+
     if (this.ctx.state === "suspended") {
-      try { await this.ctx.resume(); } catch(e) {}
+      try { 
+        await this.ctx.resume(); 
+      } catch(e) {
+        console.warn("AudioContext resume failed in playAll:", e);
+      }
     }
 
     for (const [id, entry] of this.tracks) {
@@ -103,7 +127,10 @@ class AudioEngine {
         // ensure it can play
         if (entry.audioEl.readyState < 2) {
           await new Promise((resolve) => {
-            const onCanPlay = () => { entry.audioEl.removeEventListener("canplay", onCanPlay); resolve(); };
+            const onCanPlay = () => { 
+              entry.audioEl.removeEventListener("canplay", onCanPlay); 
+              resolve(); 
+            };
             entry.audioEl.addEventListener("canplay", onCanPlay);
             setTimeout(resolve, 500);
           });
@@ -112,8 +139,9 @@ class AudioEngine {
         entry.audioEl.currentTime = Math.min(offset, Math.max(0, dur - 0.05));
         await entry.audioEl.play();
         entry.playing = true;
+        console.log(`✅ Track ${id} playing at offset ${offset}`);
       } catch (e) {
-        console.warn(`Play failed for track ${id}`, e);
+        console.warn(`❌ Play failed for track ${id}`, e);
         entry.playing = false;
       }
     }
@@ -121,7 +149,9 @@ class AudioEngine {
 
   pauseAll() {
     this.tracks.forEach((entry) => {
-      try { entry.audioEl.pause(); } catch(e) {}
+      try { 
+        entry.audioEl.pause(); 
+      } catch(e) {}
       entry.playing = false;
     });
   }
@@ -133,7 +163,9 @@ class AudioEngine {
 
       if (masterTime < clipStart || masterTime >= clipEnd) {
         if (entry.playing) {
-          try { entry.audioEl.pause(); } catch(e) {}
+          try { 
+            entry.audioEl.pause(); 
+          } catch(e) {}
           entry.playing = false;
         }
         return;
@@ -148,6 +180,11 @@ class AudioEngine {
         if (entry.playing) entry.audioEl.play().catch(()=>{});
       } catch (e) {}
     });
+  }
+
+  getCurrentTime() {
+    if (!this.ctx) return 0;
+    return this.ctx.currentTime;
   }
 
   updateTrack(id, { volume, muted, start, end, loop, src } = {}) {
@@ -189,7 +226,12 @@ class AudioEngine {
     console.log("[AudioEngine]", {
       state: this.ctx?.state,
       tracks: Array.from(this.tracks.values()).map(t => ({
-        id: t.id, start: t.start, end: t.end, playing: t.playing, vol: t.volume, muted: t.muted
+        id: t.id, 
+        start: t.start, 
+        end: t.end, 
+        playing: t.playing, 
+        vol: t.volume, 
+        muted: t.muted
       }))
     });
   }

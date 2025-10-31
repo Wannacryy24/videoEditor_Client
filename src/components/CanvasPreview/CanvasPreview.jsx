@@ -34,6 +34,7 @@ const CanvasPreview = forwardRef(
       isPlaying: timelineIsPlaying,
       setIsPlaying: setTimelineIsPlaying,
       addToLibrary,
+      mediaLibrary
     } = useTimeline();
 
     const { canvasSize } = useCanvas();
@@ -80,6 +81,46 @@ const CanvasPreview = forwardRef(
     const track = timeline?.tracks?.[0];
     const selectedClip =
       track?.clips?.find((c) => c.id === selectedClipId) || null;
+
+    // Add this debug function to CanvasPreview.jsx
+    const debugAudioFile = useCallback(async (audioUrl) => {
+      console.log("🔊 Testing audio file:", audioUrl);
+
+      return new Promise((resolve) => {
+        const audio = new Audio(audioUrl);
+        audio.controls = true; // Add controls to see what's happening
+        audio.style.position = 'fixed';
+        audio.style.top = '10px';
+        audio.style.left = '10px';
+        audio.style.zIndex = '9999';
+        document.body.appendChild(audio);
+
+        audio.addEventListener('loadeddata', () => {
+          console.log("✅ Audio loaded - duration:", audio.duration);
+          resolve(true);
+        });
+
+        audio.addEventListener('canplay', () => {
+          console.log("✅ Audio can play");
+          audio.play().then(() => {
+            console.log("✅ Audio playing successfully");
+            resolve(true);
+          }).catch(e => {
+            console.error("❌ Audio play failed:", e);
+            resolve(false);
+          });
+        });
+
+        audio.addEventListener('error', (e) => {
+          console.error("❌ Audio error:", e);
+          console.log("Audio error details:", audio.error);
+          resolve(false);
+        });
+
+        // Load the audio
+        audio.load();
+      });
+    }, []);
 
     // ---- Compute how video fits inside canvas ----
     const computeVideoDisplay = useCallback(
@@ -282,7 +323,40 @@ const CanvasPreview = forwardRef(
       return () => clearTimeout(timeoutId);
     }, [effectiveCurrentTime]);
 
+    useEffect(() => {
+      const video = videoRef.current;
+      if (!video || !effectiveIsPlaying) return;
+
+      let rAF = null;
+
+      const syncToAudio = () => {
+        // Get audio engine clock
+        const audioTime = audioEngine.getCurrentTime();
+
+        // Compute target video time based on clip offset
+        const clip = timeline?.tracks?.[0]?.clips?.[0];
+        const clipStart = clip?.position || 0;
+        const targetTime = audioTime - clipStart;
+
+        // Only correct drift > 10ms
+        if (Math.abs(video.currentTime - targetTime) > 0.01) {
+          video.currentTime = Math.max(0, targetTime);
+        }
+
+        video.requestVideoFrameCallback(syncToAudio);
+      };
+
+      video.requestVideoFrameCallback(syncToAudio);
+
+      return () => {
+        if (rAF) cancelAnimationFrame(rAF);
+      };
+    }, [effectiveIsPlaying, timeline]);
+
     // ---- Play / Pause ----
+    // PATCH for: src/components/CanvasPreview/CanvasPreview.jsx
+    // Replace the handleTogglePlayPause function with this:
+
     const handleTogglePlayPause = useCallback(async () => {
       const v = (globalVideoRef && globalVideoRef.current) || videoRef.current;
       if (!v) {
@@ -295,20 +369,35 @@ const CanvasPreview = forwardRef(
 
       if (v.paused || v.ended) {
         try {
-          // ✅ FIRST: Make sure video audio is added to AudioEngine
-          // if (selectedClip) {
-          //   audioEngine.addTrack(selectedClip.id, selectedClip.src, {
-          //     start: 0,
-          //     end: selectedClip.duration,
-          //     volume: 1,
-          //     muted: false,
-          //   });
-          // }
-          
-          // Play video (muted - for visual only)
+          // ✅ USE BACKEND EXTRACTED AUDIO
+          if (selectedClip) {
+            // Find the media library item to get audioUrl
+            const mediaItem = timeline.mediaLibrary?.find(m => m.id === selectedClip.id) ||
+              mediaLibrary?.find(m => m.src === selectedClip.src);
+
+            const audioUrl = mediaItem?.audioUrl;
+
+            console.log(`🎵 Playing clip: ${selectedClip.id}`, {
+              videoSrc: selectedClip.src,
+              audioUrl: audioUrl,
+              usingAudio: audioUrl ? 'BACKEND_EXTRACTED' : 'FALLBACK_ORIGINAL'
+            });
+
+            // Add track with backend extracted audio
+            audioEngine.addTrack(selectedClip.id, selectedClip.src, {
+              start: 0,
+              end: selectedClip.duration,
+              volume: 1,
+              muted: false,
+              audioUrl: audioUrl  // ✅ PASS EXTRACTED AUDIO URL
+            });
+          }
+
+          // Play video (MUTED - audio handled by AudioEngine)
+          v.muted = true;
           await v.play();
 
-          // Play audio through AudioEngine
+          // Play clean backend audio through AudioEngine
           audioEngine.playAll(currentTime);
 
           setTimelineIsPlaying(true);
@@ -328,7 +417,7 @@ const CanvasPreview = forwardRef(
         setTimelineIsPlaying(false);
         onPlayStatusChange?.(false);
       }
-    }, [globalVideoRef, currentTime, setTimelineIsPlaying, onPlayStatusChange, selectedClip]);
+    }, [globalVideoRef, currentTime, setTimelineIsPlaying, onPlayStatusChange, selectedClip, timeline?.mediaLibrary]);
 
     // ---- Crop drag logic (commented out as per your code) ----
     const startDrag = (type, e) => {

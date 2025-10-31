@@ -71,6 +71,7 @@ export default function MultiUpload() {
           diskFilename: item.id,
           originalFilename: item.originalName,
           src: item.url,
+          audioUrl: item.audioUrl, // ✅ ensure passed
         });
 
         // ✅ Correct usage

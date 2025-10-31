@@ -71,6 +71,7 @@ export function TimelineProvider({ children }) {
       duration: Number(duration || 0),
       backendId: opts.backendId || opts.id || null,
       filename: src.split("/").pop(),
+      audioUrl: opts.audioUrl || null, // ✅ Add clean extracted WAV here
     };
 
     setMediaLibrary((prev) => {
@@ -89,82 +90,86 @@ export function TimelineProvider({ children }) {
     );
   }, []);
 
-  const addClipFromLibrary = useCallback(
-    async (libId, toTrackId, positionSeconds = null) => {
-      const libItem = mediaLibrary.find((m) => m.id === libId);
-      if (!libItem) return;
+  // PATCH for: src/context/TimelineContext.js
+// In the addClipFromLibrary function, ensure audioUrl is passed:
 
-      const clipId = Date.now().toString();
+const addClipFromLibrary = useCallback(
+  async (libId, toTrackId, positionSeconds = null) => {
+    const libItem = mediaLibrary.find((m) => m.id === libId);
+    if (!libItem) return;
 
-      let duration = libItem.duration;
-      try {
-        const res = await fetch(`http://localhost:8080/metadata/${libItem.filename}`);
-        if (res.ok) {
-          const data = await res.json();
-          duration = data.duration || duration;
-        }
-      } catch (err) {
-        console.warn("Metadata fetch failed:", err);
+    const clipId = Date.now().toString();
+
+    let duration = libItem.duration;
+    try {
+      const res = await fetch(`http://localhost:8080/metadata/${libItem.filename}`);
+      if (res.ok) {
+        const data = await res.json();
+        duration = data.duration || duration;
       }
+    } catch (err) {
+      console.warn("Metadata fetch failed:", err);
+    }
 
-      let thumbnails = [];
-      try {
-        const res = await fetch(
-          `http://localhost:8080/thumbnails/${libItem.filename}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ count: Math.min(10, Math.floor(duration)) }),
-          }
-        );
-        if (res.ok) {
-          const data = await res.json();
-          thumbnails = data.thumbnails || [];
+    let thumbnails = [];
+    try {
+      const res = await fetch(
+        `http://localhost:8080/thumbnails/${libItem.filename}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ count: Math.min(10, Math.floor(duration)) }),
         }
-      } catch (err) {
-        console.warn("Thumbnail generation failed:", err);
+      );
+      if (res.ok) {
+        const data = await res.json();
+        thumbnails = data.thumbnails || [];
       }
+    } catch (err) {
+      console.warn("Thumbnail generation failed:", err);
+    }
 
-      setTimeline((prev) => {
-        const tracksCopy = prev.tracks.map((t) => ({
-          ...t,
-          clips: [...t.clips],
-        }));
+    setTimeline((prev) => {
+      const tracksCopy = prev.tracks.map((t) => ({
+        ...t,
+        clips: [...t.clips],
+      }));
 
-        const targetTrack =
-          tracksCopy.find((t) => t.id === toTrackId) || tracksCopy[0];
+      const targetTrack =
+        tracksCopy.find((t) => t.id === toTrackId) || tracksCopy[0];
 
-        const position =
-          positionSeconds != null
-            ? Math.max(0, positionSeconds)
-            : _getAppendPosition(targetTrack);
+      const position =
+        positionSeconds != null
+          ? Math.max(0, positionSeconds)
+          : _getAppendPosition(targetTrack);
 
-        const newClip = {
-          id: clipId,
-          src: libItem.src,
-          name: libItem.name,
-          type: "video",
-          start: 0,
-          end: duration,
-          position,
-          duration,
-          thumbnails,
-          diskFilename: libItem.diskFilename || libItem.id,
-          originalFilename: libItem.originalFilename,
-        };
+      const newClip = {
+        id: clipId,
+        src: libItem.src,
+        audioUrl: libItem.audioUrl, // ✅ ENSURE AUDIO URL IS PASSED
+        name: libItem.name,
+        type: "video",
+        start: 0,
+        end: duration,
+        position,
+        duration,
+        thumbnails,
+        diskFilename: libItem.diskFilename || libItem.id,
+        originalFilename: libItem.originalFilename,
+      };
 
-        targetTrack.clips.push(newClip);
+      targetTrack.clips.push(newClip);
 
-        const allClips = tracksCopy.flatMap((t) => t.clips);
-        const newDuration = allClips.length
-          ? Math.max(...allClips.map((c) => c.position + c.duration))
-          : 0;
+      const allClips = tracksCopy.flatMap((t) => t.clips);
+      const newDuration = allClips.length
+        ? Math.max(...allClips.map((c) => c.position + c.duration))
+        : 0;
 
-        return { ...prev, tracks: tracksCopy, duration: newDuration };
-      });
-    },
-    [mediaLibrary, _getAppendPosition]
-  );
+      return { ...prev, tracks: tracksCopy, duration: newDuration };
+    });
+  },
+  [mediaLibrary, _getAppendPosition]
+);
 
   const addClip = useCallback(
     (src, duration, opts = {}) => {
@@ -323,7 +328,7 @@ export function TimelineProvider({ children }) {
     audioEngine.clearAll();
     timeline.tracks?.forEach((track) => {
       track.clips?.forEach((clip) => {
-        audioEngine.addTrack(clip.id, clip.src, {
+        audioEngine.addTrack(clip.id, clip.audioUrl || clip.src, {
           start: clip.position || 0,
           end: (clip.position || 0) + clip.duration,
           volume: clip.volume ?? 1,
@@ -334,7 +339,7 @@ export function TimelineProvider({ children }) {
 
     timeline.audioTracks?.forEach((track) => {
       track.clips?.forEach((clip) => {
-        audioEngine.addTrack(clip.id, clip.src, {
+        audioEngine.addTrack(clip.id, clip.audioUrl || clip.src, {
           start: clip.position || 0,
           end: (clip.position || 0) + clip.duration,
           volume: clip.volume ?? 1,
