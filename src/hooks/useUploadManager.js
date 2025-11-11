@@ -8,35 +8,23 @@ import { useNotification } from "../context/NotificationContext";
 export function useUploadManager(setActiveTool) {
   const { addToLibrary } = useTimeline();
   const { addNotification } = useNotification();
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ auto-switch between local & prod
 
+  // ✅ Safely normalize any URL (handles missing colon + double base issue)
   const normalizeUrl = (url) => {
     if (!url) return "";
 
-    // 🚨 TEMPORARY: Handle malformed https// URLs from backend
-    if (url.startsWith("https//")) {
-      console.warn("⚠️ Fixing malformed URL from backend:", url);
-      return url.replace("https//", "https://");
-    }
-    if (url.startsWith("http//")) {
-      console.warn("⚠️ Fixing malformed URL from backend:", url);
-      return url.replace("http//", "http://");
-    }
+    // 🧹 Fix malformed protocol ("https//" → "https://")
+    url = url.replace(/^https\/\//, "https://").replace(/^http\/\//, "http://");
 
-    // ✅ Normal URL handling
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url;
-    }
+    // 🧠 If the URL already starts with http(s), trust it — don't prepend again
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
 
-    // If URL starts with // (protocol-relative), add https: as default
-    if (url.startsWith("//")) {
-      return `https:${url}`;
-    }
-
-    // Otherwise, prepend API base URL for relative paths
-    return `${API_BASE_URL}${url}`;
+    // ✅ Otherwise, prefix with API base
+    return `${API_BASE_URL}${url.startsWith("/") ? url : `/${url}`}`;
   };
 
+  // Get duration of video
   const getVideoDuration = (url) =>
     new Promise((resolve) => {
       const video = document.createElement("video");
@@ -46,6 +34,7 @@ export function useUploadManager(setActiveTool) {
       video.onerror = () => resolve(0);
     });
 
+  // Upload handler
   const uploadFilesToBackend = async (files) => {
     if (!files || files.length === 0) return;
 
@@ -61,30 +50,19 @@ export function useUploadManager(setActiveTool) {
       if (!res.ok) throw new Error("Upload failed");
       const data = await res.json();
 
-      // 🔍 DEBUG: Check what URLs the backend is returning
-      console.log("🔍 Backend response:", data);
-      if (data.items && data.items.length > 0) {
-        console.log("🔍 First item URL from backend:", data.items[0].url);
-        console.log("🔍 Is URL malformed?", data.items[0].url.includes("https//"));
-      }
-
-      // ✅ Auto-switch to Media tab (if available)
       if (setActiveTool) setActiveTool("media");
 
-      // Sequential upload handling (500ms delay per file)
+      // ✅ Process each uploaded file
       for (let i = 0; i < data.items.length; i++) {
         const item = data.items[i];
         const delay = i * 500;
 
         setTimeout(async () => {
           const fullUrl = normalizeUrl(item.url);
-
-          console.log("🧩 Original URL:", item.url);
-          console.log("🧩 Normalized URL:", fullUrl);
+          const fullAudioUrl = normalizeUrl(item.audioUrl);
 
           let duration = item.duration;
-          if (!duration || duration === 0)
-            duration = await getVideoDuration(fullUrl);
+          if (!duration || duration === 0) duration = await getVideoDuration(fullUrl);
 
           addToLibrary(fullUrl, duration, {
             id: item.id,
@@ -97,8 +75,10 @@ export function useUploadManager(setActiveTool) {
             width: item.width,
             height: item.height,
             fps: item.fps,
+            audioUrl: fullAudioUrl, // ✅ include extracted audio
           });
 
+          console.log("✅ Added video:", fullUrl);
           addNotification(`🎬 ${item.originalName} added successfully!`, "success");
         }, delay);
       }
@@ -113,8 +93,3 @@ export function useUploadManager(setActiveTool) {
 
   return { uploadFilesToBackend };
 }
-
-
-
-
-// Asddded Somethign
