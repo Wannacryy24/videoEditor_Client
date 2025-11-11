@@ -8,13 +8,22 @@ import { useNotification } from "../context/NotificationContext";
 export function useUploadManager(setActiveTool) {
   const { addToLibrary } = useTimeline();
   const { addNotification } = useNotification();
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ auto-switch between local & prod
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const normalizeUrl = (url) => {
     if (!url) return "";
 
-    // ✅ FIXED: Better URL normalization
-    // If URL already has protocol, return as-is
+    // 🚨 TEMPORARY FIX: Handle malformed https// URLs from backend
+    if (url.startsWith("https//")) {
+      console.warn("⚠️ Fixing malformed URL from backend:", url);
+      return url.replace("https//", "https://");
+    }
+    if (url.startsWith("http//")) {
+      console.warn("⚠️ Fixing malformed URL from backend:", url);
+      return url.replace("http//", "http://");
+    }
+
+    // ✅ Normal URL handling
     if (url.startsWith("http://") || url.startsWith("https://")) {
       return url;
     }
@@ -27,10 +36,6 @@ export function useUploadManager(setActiveTool) {
     // Otherwise, prepend API base URL for relative paths
     return `${API_BASE_URL}${url}`;
   };
-  // ✅ Fix malformed protocols
-
-
-  // ✅ If URL is already absolute, return as is (prevents double prefix)
 
   const getVideoDuration = (url) =>
     new Promise((resolve) => {
@@ -56,19 +61,26 @@ export function useUploadManager(setActiveTool) {
       if (!res.ok) throw new Error("Upload failed");
       const data = await res.json();
 
+      // 🔍 DEBUG: Check what URLs the backend is returning
+      console.log("🔍 Backend response:", data);
+      if (data.items && data.items.length > 0) {
+        console.log("🔍 First item URL from backend:", data.items[0].url);
+        console.log("🔍 Is URL malformed?", data.items[0].url.includes("https//"));
+      }
+
       // ✅ Auto-switch to Media tab (if available)
       if (setActiveTool) setActiveTool("media");
 
       // Sequential upload handling (500ms delay per file)
       for (let i = 0; i < data.items.length; i++) {
         const item = data.items[i];
-        const delay = i * 500; // 0.5s between each notification
+        const delay = i * 500;
 
         setTimeout(async () => {
           const fullUrl = normalizeUrl(item.url);
 
-          // 🧩 Debug once (you can remove later)
-          console.log("🧩 Final normalized upload URL:", fullUrl);
+          console.log("🧩 Original URL:", item.url);
+          console.log("🧩 Normalized URL:", fullUrl);
 
           let duration = item.duration;
           if (!duration || duration === 0)
@@ -101,3 +113,8 @@ export function useUploadManager(setActiveTool) {
 
   return { uploadFilesToBackend };
 }
+
+
+
+
+// Asddded Somethign
