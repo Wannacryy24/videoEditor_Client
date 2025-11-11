@@ -12,7 +12,7 @@ import { useCanvas } from "../../context/CanvasContext";
 import { FaRegCirclePlay, FaRegCirclePause } from "react-icons/fa6";
 import "./CanvasPreview.css";
 import audioEngine from "../../engine/AudioEngine";
-
+import { normalizeUrl } from "../../utils/normalizeUrl";
 
 const CanvasPreview = forwardRef(
   (
@@ -166,6 +166,7 @@ const CanvasPreview = forwardRef(
 
     // ---- Global ref for other components ----
     useEffect(() => {
+      console.log("🎬 Selected clip source:", selectedClip?.src);
       if (setGlobalVideoRef && videoRef.current) {
         setGlobalVideoRef(videoRef);
       }
@@ -178,7 +179,9 @@ const CanvasPreview = forwardRef(
 
       // Only update src if it changed
       if (video.src !== selectedClip.src) {
-        video.src = selectedClip.src;
+        const cleanSrc = normalizeUrl(selectedClip.src); // ✅ Fix malformed URL
+        console.log("🎥 Final video URL:", cleanSrc);
+        video.src = cleanSrc;
         video.crossOrigin = "anonymous";
         video.preload = "auto";
         video.muted = true;

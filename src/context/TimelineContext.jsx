@@ -62,27 +62,27 @@ export function TimelineProvider({ children }) {
   }, []);
 
   const addToLibrary = useCallback((src, duration = 0, opts = {}) => {
-    const id = opts.id || `lib-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    const item = {
-      id,
-      src,
-      name: opts.name || `media-${id}`,
-      duration: Number(duration || 0),
-      backendId: opts.backendId || opts.id || null,
-      filename: src?.split("/")?.pop() || "",
-      audioUrl: opts.audioUrl || null,
-    };
+  const id = opts.id || `lib-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const item = {
+    id,
+    src,
+    name: opts.name || `media-${id}`,
+    duration: Number(duration || 0),
+    backendId: opts.backendId || opts.id || null,
+    filename: src?.split("/")?.pop() || "",
+    audioUrl: opts.audioUrl || null,
+  };
 
-    setMediaLibrary((prev) => {
-      const found = prev.find((p) => p.id === id);
-      if (found) {
-        return prev.map((p) => (p.id === id ? { ...p, ...item } : p));
-      }
-      return [...prev, item];
-    });
+  setMediaLibrary((prev) => {
+    const found = prev.find((p) => p.id === id);
+    if (found) {
+      return prev.map((p) => (p.id === id ? { ...p, ...item } : p));
+    }
+    return [...prev, item];
+  });
 
-    return id; // ✅ ADD THIS LINE — fixes "undefined clip"
-  }, []);
+  return id; // ✅ critical — fixes undefined clip
+}, []);
 
   const updateLibraryItem = useCallback((libId, updates) => {
     setMediaLibrary((prev) =>
