@@ -9,13 +9,20 @@ export function useUploadManager(setActiveTool) {
   const { addToLibrary } = useTimeline();
   const { addNotification } = useNotification();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ auto-switch between local & prod
-  
+
   const normalizeUrl = (url) => {
     if (!url) return "";
-    // Fix missing colon (http// -> http://)
-    if (url.startsWith("http//")) url = url.replace("http//", "http://");
-    if (url.startsWith("https//")) url = url.replace("https//", "https://");
-    return url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
+
+    // ✅ Fix malformed protocols
+    url = url.replace(/^http(?=[^:])/, "http:").replace(/^https(?=[^:])/, "https:");
+
+    // ✅ If URL is already absolute, return as is (prevents double prefix)
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+
+    // ✅ Otherwise, prepend API base URL
+    return `${API_BASE_URL}${url}`;
   };
 
   const getVideoDuration = (url) =>
@@ -52,6 +59,9 @@ export function useUploadManager(setActiveTool) {
 
         setTimeout(async () => {
           const fullUrl = normalizeUrl(item.url);
+
+          // 🧩 Debug once (you can remove later)
+          console.log("🧩 Final normalized upload URL:", fullUrl);
 
           let duration = item.duration;
           if (!duration || duration === 0)
