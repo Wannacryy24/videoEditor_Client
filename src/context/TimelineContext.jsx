@@ -71,7 +71,7 @@ export function TimelineProvider({ children }) {
       duration: Number(duration || 0),
       backendId: opts.backendId || opts.id || null,
       filename: src?.split("/")?.pop() || "",
-      audioUrl: opts.audioUrl || null, // ✅ Add clean extracted WAV here
+      audioUrl: opts.audioUrl || null,
     };
 
     setMediaLibrary((prev) => {
@@ -81,7 +81,8 @@ export function TimelineProvider({ children }) {
       }
       return [...prev, item];
     });
-    return id;
+
+    return id; // ✅ fix undefined clip issue
   }, []);
 
   const updateLibraryItem = useCallback((libId, updates) => {
@@ -99,25 +100,24 @@ export function TimelineProvider({ children }) {
       if (!libItem) return;
 
       const clipId = Date.now().toString();
-
       let duration = libItem.duration;
       let thumbnails = [];
 
       try {
-        // ✅ Safe metadata fetch
-        const metaUrl = libItem.filename.startsWith("http")
-          ? libItem.filename
-          : `${API_BASE_URL}/metadata/${libItem.filename}`;
+        // ✅ Use libItem.src instead of filename
+        const metaUrl = libItem.src.startsWith("http")
+          ? libItem.src
+          : `${API_BASE_URL}/metadata/${libItem.src}`;
         const metaRes = await fetch(metaUrl);
         if (metaRes.ok) {
           const metaData = await metaRes.json();
           duration = metaData.duration || duration;
         }
 
-        // ✅ Safe thumbnails fetch
-        const thumbUrl = libItem.filename.startsWith("http")
-          ? `${libItem.filename}/thumbnails`
-          : `${API_BASE_URL}/thumbnails/${libItem.filename}`;
+        // ✅ Use libItem.src for thumbnail generation
+        const thumbUrl = libItem.src.startsWith("http")
+          ? `${libItem.src}/thumbnails`
+          : `${API_BASE_URL}/thumbnails/${libItem.src}`;
 
         const thumbRes = await fetch(thumbUrl, {
           method: "POST",
@@ -150,7 +150,7 @@ export function TimelineProvider({ children }) {
         const newClip = {
           id: clipId,
           src: libItem.src,
-          audioUrl: libItem.audioUrl, // ✅ ENSURE AUDIO URL IS PASSED
+          audioUrl: libItem.audioUrl,
           name: libItem.name,
           type: "video",
           start: 0,
@@ -171,6 +171,8 @@ export function TimelineProvider({ children }) {
 
         return { ...prev, tracks: tracksCopy, duration: newDuration };
       });
+
+      return clipId; // ✅ also fixes “undefined” clip ID
     },
     [mediaLibrary, _getAppendPosition]
   );
