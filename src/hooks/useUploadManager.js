@@ -13,7 +13,7 @@ export function useUploadManager(setActiveTool) {
   const normalizeUrl = (url) => {
     if (!url) return "";
 
-    // 🚨 TEMPORARY FIX: Handle malformed https// URLs from backend
+    // 🚨 TEMPORARY: Handle malformed https// URLs from backend
     if (url.startsWith("https//")) {
       console.warn("⚠️ Fixing malformed URL from backend:", url);
       return url.replace("https//", "https://");
