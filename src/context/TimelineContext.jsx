@@ -62,8 +62,7 @@ export function TimelineProvider({ children }) {
   }, []);
 
   const addToLibrary = useCallback((src, duration = 0, opts = {}) => {
-    const id =
-      opts.id || `lib-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const id = opts.id || `lib-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const item = {
       id,
       src,
@@ -82,7 +81,7 @@ export function TimelineProvider({ children }) {
       return [...prev, item];
     });
 
-    return id; // ✅ fix undefined clip issue
+    return id; // ✅ ADD THIS LINE — fixes "undefined clip"
   }, []);
 
   const updateLibraryItem = useCallback((libId, updates) => {
