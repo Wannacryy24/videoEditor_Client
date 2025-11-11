@@ -7,6 +7,7 @@ export default function ExportControls() {
   const [format, setFormat] = useState("mp4"); // default
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ auto-switch between local & prod
 
   const handleExport = async () => {
     if (!currentVideoFile) return setError("No video selected");
@@ -19,7 +20,7 @@ export default function ExportControls() {
       formData.append("video", currentVideoFile);
       formData.append("format", format);
 
-      const res = await fetch("http://localhost:8080/export", {
+      const res = await fetch(`${API_BASE_URL}/export`, {
         method: "POST",
         body: formData,
       });
@@ -29,14 +30,12 @@ export default function ExportControls() {
 
       if (data && data.url) {
         // Fetch converted video as Blob and create File
-        const blob = await fetch(`http://localhost:8080${data.url}`).then(r =>
-          r.blob()
-        );
+        const blob = await fetch(`${API_BASE_URL}${data.url}`).then((r) => r.blob());
         const newFile = new File([blob], `exported.${format}`, {
           type: `video/${format}`,
         });
 
-        updateVideo(newFile, `http://localhost:8080${data.url}`);
+        updateVideo(newFile, `${API_BASE_URL}${data.url}`);
       } else {
         throw new Error("Invalid response from server");
       }

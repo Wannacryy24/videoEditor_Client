@@ -23,6 +23,7 @@ export default function MultiUpload() {
     timeline,
   } = useTimeline();
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ auto-switch between local & prod
   const { setVideoFile, setPreviewUrl } = useVideo();
 
   const inputRef = useRef(null);
@@ -48,7 +49,7 @@ export default function MultiUpload() {
 
     try {
       setUploading(true);
-      const res = await fetch("http://localhost:8080/api/uploads", {
+      const res = await fetch(`${API_BASE_URL}/api/uploads`, {
         method: "POST",
         body: formData,
       });
@@ -58,9 +59,11 @@ export default function MultiUpload() {
 
       for (const item of data.items) {
         let duration = item.duration;
-        if (!duration || duration === 0) duration = await getVideoDuration(item.url);
+        // if (!duration || duration === 0) duration = await getVideoDuration(item.url);
+        if (!duration || duration === 0)
+  duration = await getVideoDuration(`${API_BASE_URL}${item.url}`);
 
-        const libId = addToLibrary(item.url, duration, {
+        const libId = addToLibrary(`${API_BASE_URL}${item.url}`, duration, {
           id: item.id,
           name: item.originalName,
           backendId: item.id,
@@ -70,7 +73,7 @@ export default function MultiUpload() {
           hasAudio: item.hasAudio,
           diskFilename: item.id,
           originalFilename: item.originalName,
-          src: item.url,
+          src: `${API_BASE_URL}${item.url}`,
           audioUrl: item.audioUrl, // ✅ ensure passed
         });
 
