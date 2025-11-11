@@ -13,17 +13,24 @@ export function useUploadManager(setActiveTool) {
   const normalizeUrl = (url) => {
     if (!url) return "";
 
-    // ✅ Fix malformed protocols
-    url = url.replace(/^http(?=[^:])/, "http:").replace(/^https(?=[^:])/, "https:");
-
-    // ✅ If URL is already absolute, return as is (prevents double prefix)
+    // ✅ FIXED: Better URL normalization
+    // If URL already has protocol, return as-is
     if (url.startsWith("http://") || url.startsWith("https://")) {
       return url;
     }
 
-    // ✅ Otherwise, prepend API base URL
+    // If URL starts with // (protocol-relative), add https: as default
+    if (url.startsWith("//")) {
+      return `https:${url}`;
+    }
+
+    // Otherwise, prepend API base URL for relative paths
     return `${API_BASE_URL}${url}`;
   };
+  // ✅ Fix malformed protocols
+
+
+  // ✅ If URL is already absolute, return as is (prevents double prefix)
 
   const getVideoDuration = (url) =>
     new Promise((resolve) => {
