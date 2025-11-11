@@ -16,7 +16,7 @@ export default function VideoTrack({ onThumbnailClick, maxThumbsPerClip = 8 }) {
     selectedClipId,
     setSelectedClipId,
   } = useTimeline();
-
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ auto-switch between local & prod
   const [dragOverTrackId, setDragOverTrackId] = useState(null);
   const [dragOverNewTrack, setDragOverNewTrack] = useState(false);
   // const [selectedClipId, setSelectedClipId] = useState(null);
@@ -236,7 +236,7 @@ export default function VideoTrack({ onThumbnailClick, maxThumbsPerClip = 8 }) {
 
       try {
         // ✅ 1. Send trim request to new endpoint
-        const res = await fetch("http://localhost:8080/trim", {
+        const res = await fetch(`${API_BASE_URL}/trim`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -248,7 +248,7 @@ export default function VideoTrack({ onThumbnailClick, maxThumbsPerClip = 8 }) {
 
         if (res.ok) {
           const data = await res.json();
-          const newSrc = `http://localhost:8080${data.trimmedUrl}`;
+          const newSrc = `${API_BASE_URL}${data.trimmedUrl}`;
 
           // ✅ 2. Update clip with the latest video
           updateClip(clip.id, {
@@ -264,7 +264,7 @@ export default function VideoTrack({ onThumbnailClick, maxThumbsPerClip = 8 }) {
 
           // ✅ 3. Generate new thumbnails from backend
           try {
-            const thumbRes = await fetch(`http://localhost:8080/thumbnails/${data.filename}`, {
+            const thumbRes = await fetch(`${API_BASE_URL}/thumbnails/${data.filename}`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -505,7 +505,7 @@ export default function VideoTrack({ onThumbnailClick, maxThumbsPerClip = 8 }) {
                         src = f.url;
                       } else if (f.url) {
                         // ✅ Use the latest video thumbnails
-                        src = `http://localhost:8080${f.url}`;
+                        src = `${API_BASE_URL}${f.url}`;
                       }
                       return (
                         <div

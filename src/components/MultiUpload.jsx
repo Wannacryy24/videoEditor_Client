@@ -61,7 +61,7 @@ export default function MultiUpload() {
         let duration = item.duration;
         // if (!duration || duration === 0) duration = await getVideoDuration(item.url);
         if (!duration || duration === 0)
-  duration = await getVideoDuration(`${API_BASE_URL}${item.url}`);
+          duration = await getVideoDuration(`${API_BASE_URL}${item.url}`);
 
         const libId = addToLibrary(`${API_BASE_URL}${item.url}`, duration, {
           id: item.id,

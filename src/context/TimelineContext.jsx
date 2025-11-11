@@ -16,7 +16,7 @@ export function TimelineProvider({ children }) {
       },
     ],
   });
-
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ auto-switch between local & prod
   const [currentTime, setCurrentTime] = useState(0);
   const [mediaLibrary, setMediaLibrary] = useState([]);
   const videoRef = useRef(null);
@@ -102,7 +102,7 @@ export function TimelineProvider({ children }) {
 
       let duration = libItem.duration;
       try {
-        const res = await fetch(`http://localhost:8080/metadata/${libItem.filename}`);
+        const res = await fetch(`${API_BASE_URL}/metadata/${libItem.filename}`);
         if (res.ok) {
           const data = await res.json();
           duration = data.duration || duration;
@@ -113,13 +113,11 @@ export function TimelineProvider({ children }) {
 
       let thumbnails = [];
       try {
-        const res = await fetch(
-          `http://localhost:8080/thumbnails/${libItem.filename}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ count: Math.min(10, Math.floor(duration)) }),
-          }
+        const res = await fetch(`${API_BASE_URL}/thumbnails/${libItem.filename}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ count: Math.min(10, Math.floor(duration)) }),
+        }
         );
         if (res.ok) {
           const data = await res.json();
@@ -349,45 +347,45 @@ export function TimelineProvider({ children }) {
   }, [timeline]);
 
   const duplicateClip = useCallback((clipId, count = 2) => {
-  setTimeline((prev) => {
-    const tracksCopy = prev.tracks.map((t) => ({
-      ...t,
-      clips: [...t.clips],
-    }));
+    setTimeline((prev) => {
+      const tracksCopy = prev.tracks.map((t) => ({
+        ...t,
+        clips: [...t.clips],
+      }));
 
-    const track = tracksCopy[0];
-    const baseIndex = track.clips.findIndex((c) => c.id === clipId);
-    if (baseIndex === -1) return prev;
+      const track = tracksCopy[0];
+      const baseIndex = track.clips.findIndex((c) => c.id === clipId);
+      if (baseIndex === -1) return prev;
 
-    const baseClip = { ...track.clips[baseIndex] };
-    const loopsToAdd = Math.max(0, count - 1);
+      const baseClip = { ...track.clips[baseIndex] };
+      const loopsToAdd = Math.max(0, count - 1);
 
-    let nextPosition = baseClip.position + baseClip.duration;
+      let nextPosition = baseClip.position + baseClip.duration;
 
-    for (let i = 0; i < loopsToAdd; i++) {
-      const newId = `${baseClip.id}_loop_${Date.now()}_${i}`;
+      for (let i = 0; i < loopsToAdd; i++) {
+        const newId = `${baseClip.id}_loop_${Date.now()}_${i}`;
 
-      const newClip = {
-        ...baseClip,
-        id: newId,
-        position: nextPosition,
-        start: 0,
-        end: baseClip.duration,
-        thumbnails: [...(baseClip.thumbnails || [])], // ✅ reuse thumbnails
-      };
+        const newClip = {
+          ...baseClip,
+          id: newId,
+          position: nextPosition,
+          start: 0,
+          end: baseClip.duration,
+          thumbnails: [...(baseClip.thumbnails || [])], // ✅ reuse thumbnails
+        };
 
-      nextPosition += baseClip.duration;
-      track.clips.splice(baseIndex + 1 + i, 0, newClip);
-    }
+        nextPosition += baseClip.duration;
+        track.clips.splice(baseIndex + 1 + i, 0, newClip);
+      }
 
-    const allClips = tracksCopy.flatMap((t) => t.clips);
-    const newDuration = allClips.length
-      ? Math.max(...allClips.map((c) => c.position + c.duration))
-      : 0;
+      const allClips = tracksCopy.flatMap((t) => t.clips);
+      const newDuration = allClips.length
+        ? Math.max(...allClips.map((c) => c.position + c.duration))
+        : 0;
 
-    return { ...prev, tracks: tracksCopy, duration: newDuration };
-  });
-}, []);
+      return { ...prev, tracks: tracksCopy, duration: newDuration };
+    });
+  }, []);
 
   return (
     <TimelineContext.Provider

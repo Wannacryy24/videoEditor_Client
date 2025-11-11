@@ -5,6 +5,7 @@ export default function RemoveAudioControls() {
   const { currentVideoFile, updateVideo } = useVideo();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ auto-switch between local & prod
 
   const handleRemoveAudio = async () => {
     if (!currentVideoFile) return setError("No video selected");
@@ -16,7 +17,7 @@ export default function RemoveAudioControls() {
       const formData = new FormData();
       formData.append("video", currentVideoFile);
 
-      const res = await fetch("http://localhost:8080/remove-audio", {
+      const res = await fetch(`${API_BASE_URL}/remove-audio`, {
         method: "POST",
         body: formData,
       });
@@ -25,9 +26,9 @@ export default function RemoveAudioControls() {
       const data = await res.json();
 
       if (data?.url) {
-        const blob = await fetch(`http://localhost:8080${data.url}`).then((r) => r.blob());
+        const blob = await fetch(`${API_BASE_URL}${data.url}`).then((r) => r.blob());
         const newFile = new File([blob], "no-audio.mp4", { type: "video/mp4" });
-        updateVideo(newFile, `http://localhost:8080${data.url}`);
+        updateVideo(newFile, `${API_BASE_URL}${data.url}`);
       } else {
         throw new Error("Invalid server response");
       }

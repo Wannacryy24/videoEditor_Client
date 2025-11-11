@@ -8,7 +8,7 @@ export default function TrimControls() {
   const [end, setEnd] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ auto-switch between local & prod
   const handleTrim = async () => {
     if (!currentVideoFile) return setError("No video selected");
 
@@ -21,7 +21,7 @@ export default function TrimControls() {
       formData.append("start", start);
       formData.append("end", end);
 
-      const res = await fetch("http://localhost:8080/trim", {
+      const res = await fetch(`${API_BASE_URL}/trim`, {
         method: "POST",
         body: formData,
       });
@@ -31,9 +31,9 @@ export default function TrimControls() {
 
       if (data && data.url) {
         // Fetch processed video as Blob to convert to File
-        const blob = await fetch(`http://localhost:8080${data.url}`).then(r => r.blob());
+        const blob = await fetch(`${API_BASE_URL}${data.url}`).then((r) => r.blob());
         const newFile = new File([blob], "processed.mp4", { type: "video/mp4" });
-        updateVideo(newFile, `http://localhost:8080${data.url}`);
+        updateVideo(newFile, `${API_BASE_URL}${data.url}`);
       } else {
         throw new Error("Invalid response from server");
       }

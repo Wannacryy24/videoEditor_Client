@@ -8,6 +8,9 @@ export default function RotateControls() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // ✅ Automatically uses correct backend (localhost or Render)
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   const handleRotate = async () => {
     if (!currentVideoFile) return setError("No video selected");
 
@@ -24,7 +27,8 @@ export default function RotateControls() {
       formData.append("video", currentVideoFile);
       formData.append("angle", angle);
 
-      const res = await fetch("http://localhost:8080/rotate", {
+      // ✅ Use environment-based backend URL
+      const res = await fetch(`${API_BASE_URL}/rotate`, {
         method: "POST",
         body: formData,
       });
@@ -33,14 +37,10 @@ export default function RotateControls() {
       const data = await res.json();
 
       if (data && data.url) {
-        // Fetch processed video as Blob and convert to File
-        const blob = await fetch(`http://localhost:8080${data.url}`).then((r) =>
-          r.blob()
-        );
+        // ✅ Fetch processed video and update context
+        const blob = await fetch(`${API_BASE_URL}${data.url}`).then((r) => r.blob());
         const newFile = new File([blob], "rotated.mp4", { type: "video/mp4" });
-
-        // Update context for next operations
-        updateVideo(newFile, `http://localhost:8080${data.url}`);
+        updateVideo(newFile, `${API_BASE_URL}${data.url}`);
       } else {
         throw new Error("Invalid response from server");
       }

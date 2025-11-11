@@ -6,6 +6,7 @@ export default function AddAudioControls() {
   const [audioFile, setAudioFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ auto-switch between local & prod
 
   const handleAddAudio = async () => {
     if (!currentVideoFile || !audioFile) {
@@ -20,7 +21,7 @@ export default function AddAudioControls() {
       formData.append("video", currentVideoFile);
       formData.append("audio", audioFile);
 
-      const res = await fetch("http://localhost:8080/add-audio", {
+      const res = await fetch(`${API_BASE_URL}/add-audio`, {
         method: "POST",
         body: formData,
       });
@@ -30,9 +31,9 @@ export default function AddAudioControls() {
 
       if (data && data.url) {
         // Fetch processed video as Blob to create new File
-        const blob = await fetch(`http://localhost:8080${data.url}`).then(r => r.blob());
+        const blob = await fetch(`${API_BASE_URL}${data.url}`).then((r) => r.blob());
         const newFile = new File([blob], "processed.mp4", { type: "video/mp4" });
-        updateVideo(newFile, `http://localhost:8080${data.url}`);
+        updateVideo(newFile, `${API_BASE_URL}${data.url}`);
       } else {
         throw new Error("Invalid response from server");
       }

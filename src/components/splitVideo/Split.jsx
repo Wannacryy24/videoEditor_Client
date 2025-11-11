@@ -14,6 +14,7 @@ export default function Split({ setActiveTool }) {
     moveClip,
   } = useTimeline();
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ auto-switch between local & prod
   const { addNotification } = useNotification();
 
   const [selectedFile, setSelectedFile] = useState("");
@@ -39,7 +40,7 @@ export default function Split({ setActiveTool }) {
 
     try {
       const filename = selectedFile.diskFilename || selectedFile.backendId;
-      const res = await fetch("http://localhost:8080/split", {
+      const res = await fetch(`${API_BASE_URL}/split`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -57,7 +58,7 @@ export default function Split({ setActiveTool }) {
 
         for (let i = 0; i < data.parts.length; i++) {
           const part = data.parts[i];
-          const url = `http://localhost:8080${part.url}`;
+          const url = `${API_BASE_URL}${part.url}`;
           const splitFilename = part.filename;
           const duration = part.duration || 0;
 

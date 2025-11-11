@@ -8,6 +8,7 @@ export default function TransitionsControls() {
   const [duration, setDuration] = useState(2); // in seconds
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ auto-switch between local & prod
 
   const handleApply = async () => {
     if (!currentVideoFile) return setError("No video selected");
@@ -20,7 +21,7 @@ export default function TransitionsControls() {
 
       // If currentVideoFile is a URL, fetch and convert to File
       if (typeof currentVideoFile === "string") {
-        const blob = await fetch(`http://localhost:8080${currentVideoFile}`).then(r => r.blob());
+        const blob = await fetch(`${API_BASE_URL}${currentVideoFile}`).then((r) => r.blob());
         videoFile = new File([blob], "currentVideo.mp4", { type: "video/mp4" });
       } else {
         videoFile = currentVideoFile; // already a File
@@ -31,7 +32,7 @@ export default function TransitionsControls() {
       formData.append("transitionType", transitionType);
       formData.append("duration", duration);
 
-      const res = await fetch("http://localhost:8080/transitions", {
+      const res = await fetch(`${API_BASE_URL}/transitions`, {
         method: "POST",
         body: formData,
       });
@@ -40,9 +41,9 @@ export default function TransitionsControls() {
       const data = await res.json();
 
       if (data && data.url) {
-        const blob = await fetch(`http://localhost:8080${data.url}`).then(r => r.blob());
+        const blob = await fetch(`${API_BASE_URL}${data.url}`).then((r) => r.blob());
         const newFile = new File([blob], "processed.mp4", { type: "video/mp4" });
-        updateVideo(newFile, `http://localhost:8080${data.url}`);
+        updateVideo(newFile, `${API_BASE_URL}${data.url}`);
       } else {
         throw new Error("Invalid response from server");
       }

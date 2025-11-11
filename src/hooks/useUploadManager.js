@@ -8,6 +8,7 @@ import { useNotification } from "../context/NotificationContext";
 export function useUploadManager(setActiveTool) {
   const { addToLibrary } = useTimeline();
   const { addNotification } = useNotification();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ auto-switch between local & prod
 
   const getVideoDuration = (url) =>
     new Promise((resolve) => {
@@ -25,7 +26,7 @@ export function useUploadManager(setActiveTool) {
     Array.from(files).forEach((file) => formData.append("files", file));
 
     try {
-      const res = await fetch("http://localhost:8080/api/uploads", {
+      const res = await fetch(`${API_BASE_URL}/api/uploads`, {
         method: "POST",
         body: formData,
       });

@@ -9,6 +9,7 @@ export default function ClipBlock({
   tileWidth,
 }) {
   const thumbs = clip.thumbnails || [];
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ auto-switch between local & prod
 
   return (
     <div
@@ -37,7 +38,7 @@ export default function ClipBlock({
             const src =
               f?.url?.startsWith("data:") || f?.url?.startsWith("http")
                 ? f.url
-                : `http://localhost:8080${f.url}`;
+                : `${API_BASE_URL}${f.url}`;
             return (
               <div
                 key={idx}
