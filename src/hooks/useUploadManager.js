@@ -9,6 +9,14 @@ export function useUploadManager(setActiveTool) {
   const { addToLibrary } = useTimeline();
   const { addNotification } = useNotification();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ auto-switch between local & prod
+  
+  const normalizeUrl = (url) => {
+    if (!url) return "";
+    // Fix missing colon (http// -> http://)
+    if (url.startsWith("http//")) url = url.replace("http//", "http://");
+    if (url.startsWith("https//")) url = url.replace("https//", "https://");
+    return url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
+  };
 
   const getVideoDuration = (url) =>
     new Promise((resolve) => {
@@ -43,9 +51,7 @@ export function useUploadManager(setActiveTool) {
         const delay = i * 500; // 0.5s between each notification
 
         setTimeout(async () => {
-          const fullUrl = item.url.startsWith("http")
-            ? item.url
-            : `${API_BASE_URL}${item.url}`;
+          const fullUrl = normalizeUrl(item.url);
 
           let duration = item.duration;
           if (!duration || duration === 0)
