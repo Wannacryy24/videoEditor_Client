@@ -5,11 +5,11 @@ export default function DemoSection() {
   return (
     <section className="demo">
       <h2 className="demo-title">Live Demo</h2>
-      <video
+      {/* <video
         src="/demo-video.mp4"
         controls
         className="demo-video"
-      />
+      /> */}
     </section>
   );
 }

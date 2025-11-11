@@ -43,17 +43,21 @@ export function useUploadManager(setActiveTool) {
         const delay = i * 500; // 0.5s between each notification
 
         setTimeout(async () => {
+          const fullUrl = item.url.startsWith("http")
+            ? item.url
+            : `${API_BASE_URL}${item.url}`;
+
           let duration = item.duration;
           if (!duration || duration === 0)
-            duration = await getVideoDuration(item.url);
+            duration = await getVideoDuration(fullUrl);
 
-          addToLibrary(item.url, duration, {
+          addToLibrary(fullUrl, duration, {
             id: item.id,
             name: item.originalName,
             backendId: item.id,
             diskFilename: item.id,
             originalFilename: item.originalName,
-            src: item.url,
+            src: fullUrl,
             hasAudio: item.hasAudio,
             width: item.width,
             height: item.height,

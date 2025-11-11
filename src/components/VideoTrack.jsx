@@ -248,7 +248,9 @@ export default function VideoTrack({ onThumbnailClick, maxThumbsPerClip = 8 }) {
 
         if (res.ok) {
           const data = await res.json();
-          const newSrc = `${API_BASE_URL}${data.trimmedUrl}`;
+          const newSrc = data.trimmedUrl.startsWith("http")
+            ? data.trimmedUrl
+            : `${API_BASE_URL}${data.trimmedUrl}`;
 
           // ✅ 2. Update clip with the latest video
           updateClip(clip.id, {
@@ -504,8 +506,10 @@ export default function VideoTrack({ onThumbnailClick, maxThumbsPerClip = 8 }) {
                       if (f.url?.startsWith("data:") || f.url?.startsWith("http")) {
                         src = f.url;
                       } else if (f.url) {
-                        // ✅ Use the latest video thumbnails
-                        src = `${API_BASE_URL}${f.url}`;
+                        // ✅ Ensure no double prefix
+                        src = f.url.startsWith("http")
+                          ? f.url
+                          : `${API_BASE_URL}${f.url}`;
                       }
                       return (
                         <div

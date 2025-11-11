@@ -70,7 +70,7 @@ export function TimelineProvider({ children }) {
       name: opts.name || `media-${id}`,
       duration: Number(duration || 0),
       backendId: opts.backendId || opts.id || null,
-      filename: src.split("/").pop(),
+      filename: src?.split("/")?.pop() || "",
       audioUrl: opts.audioUrl || null, // ✅ Add clean extracted WAV here
     };
 
@@ -101,30 +101,36 @@ export function TimelineProvider({ children }) {
       const clipId = Date.now().toString();
 
       let duration = libItem.duration;
-      try {
-        const res = await fetch(`${API_BASE_URL}/metadata/${libItem.filename}`);
-        if (res.ok) {
-          const data = await res.json();
-          duration = data.duration || duration;
-        }
-      } catch (err) {
-        console.warn("Metadata fetch failed:", err);
-      }
-
       let thumbnails = [];
+
       try {
-        const res = await fetch(`${API_BASE_URL}/thumbnails/${libItem.filename}`, {
+        // ✅ Safe metadata fetch
+        const metaUrl = libItem.filename.startsWith("http")
+          ? libItem.filename
+          : `${API_BASE_URL}/metadata/${libItem.filename}`;
+        const metaRes = await fetch(metaUrl);
+        if (metaRes.ok) {
+          const metaData = await metaRes.json();
+          duration = metaData.duration || duration;
+        }
+
+        // ✅ Safe thumbnails fetch
+        const thumbUrl = libItem.filename.startsWith("http")
+          ? `${libItem.filename}/thumbnails`
+          : `${API_BASE_URL}/thumbnails/${libItem.filename}`;
+
+        const thumbRes = await fetch(thumbUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ count: Math.min(10, Math.floor(duration)) }),
-        }
-        );
-        if (res.ok) {
-          const data = await res.json();
-          thumbnails = data.thumbnails || [];
+        });
+
+        if (thumbRes.ok) {
+          const thumbData = await thumbRes.json();
+          thumbnails = thumbData.thumbnails || [];
         }
       } catch (err) {
-        console.warn("Thumbnail generation failed:", err);
+        console.warn("Metadata/thumbnail fetch failed:", err);
       }
 
       setTimeline((prev) => {

@@ -58,7 +58,9 @@ export default function Split({ setActiveTool }) {
 
         for (let i = 0; i < data.parts.length; i++) {
           const part = data.parts[i];
-          const url = `${API_BASE_URL}${part.url}`;
+          const url = part.url.startsWith("http")
+            ? part.url
+            : `${API_BASE_URL}${part.url}`;
           const splitFilename = part.filename;
           const duration = part.duration || 0;
 

@@ -31,9 +31,13 @@ export default function TrimControls() {
 
       if (data && data.url) {
         // Fetch processed video as Blob to convert to File
-        const blob = await fetch(`${API_BASE_URL}${data.url}`).then((r) => r.blob());
+        const finalUrl = data.url.startsWith("http")
+          ? data.url
+          : `${API_BASE_URL}${data.url}`;
+
+        const blob = await fetch(finalUrl).then((r) => r.blob());
         const newFile = new File([blob], "processed.mp4", { type: "video/mp4" });
-        updateVideo(newFile, `${API_BASE_URL}${data.url}`);
+        updateVideo(newFile, finalUrl);
       } else {
         throw new Error("Invalid response from server");
       }

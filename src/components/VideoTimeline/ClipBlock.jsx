@@ -35,24 +35,25 @@ export default function ClipBlock({
       {/* Thumbnails */}
       {thumbs.length > 0
         ? thumbs.map((f, idx) => {
-            const src =
-              f?.url?.startsWith("data:") || f?.url?.startsWith("http")
-                ? f.url
-                : `${API_BASE_URL}${f.url}`;
-            return (
-              <div
-                key={idx}
-                className="clip-thumb-tile"
-                style={{ width: `${tileWidth}px`, height: "100%", flex: "0 0 auto" }}
-              >
-                {src ? (
-                  <img src={src} alt={`t-${idx}`} />
-                ) : (
-                  <div style={{ width: "100%", height: "100%", background: "#222" }} />
-                )}
-              </div>
-            );
-          })
+          const src = f?.url
+            ? f.url.startsWith("http")
+              ? f.url
+              : `${API_BASE_URL}${f.url}`
+            : "";
+          return (
+            <div
+              key={idx}
+              className="clip-thumb-tile"
+              style={{ width: `${tileWidth}px`, height: "100%", flex: "0 0 auto" }}
+            >
+              {src ? (
+                <img src={src} alt={`t-${idx}`} />
+              ) : (
+                <div style={{ width: "100%", height: "100%", background: "#222" }} />
+              )}
+            </div>
+          );
+        })
         : <div style={{ padding: 8, color: "#fff" }}>{clip.name || "Clip"}</div>}
 
       {/* Right handle */}
