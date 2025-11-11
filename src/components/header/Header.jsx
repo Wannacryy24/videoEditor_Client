@@ -2,7 +2,6 @@ import React, { useContext, useState } from "react";
 import "./Header.css";
 import { useNavigate } from "react-router-dom";
 import Login from "../login/Login";
-import { useAuth } from "../../context/AuthContext";
 
 export default function Header() {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
