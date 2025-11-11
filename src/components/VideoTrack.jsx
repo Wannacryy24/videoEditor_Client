@@ -10,14 +10,23 @@ export default function VideoTrack({ onThumbnailClick, maxThumbsPerClip = 8 }) {
     createTrackWithClip,
     addClipFromLibrary,
     updateClip,
+    removeClip,
     currentTime,
     setCurrentTime,
+    selectedClipId,
+    setSelectedClipId,
   } = useTimeline();
 
   const [dragOverTrackId, setDragOverTrackId] = useState(null);
   const [dragOverNewTrack, setDragOverNewTrack] = useState(false);
-  const [selectedClipId, setSelectedClipId] = useState(null);
+  // const [selectedClipId, setSelectedClipId] = useState(null);
   const [isResizing, setIsResizing] = useState(false);
+  const [contextMenu, setContextMenu] = useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    clipId: null
+  });
 
   const pps = timeline?.pixelsPerSecond || 100;
   const trackAreaRef = useRef(null);
@@ -108,6 +117,17 @@ export default function VideoTrack({ onThumbnailClick, maxThumbsPerClip = 8 }) {
       updateClip(clip.id, { thumbnails: [] });
     }
   };
+
+  useEffect(() => {
+    const closeMenu = () => {
+      if (contextMenu.visible) {
+        setContextMenu({ visible: false, clipId: null, x: 0, y: 0 });
+      }
+    };
+    window.addEventListener("click", closeMenu);
+    return () => window.removeEventListener("click", closeMenu);
+  }, [contextMenu.visible]);
+
 
   // Auto-generate thumbnails for new clips
   useEffect(() => {
@@ -444,6 +464,16 @@ export default function VideoTrack({ onThumbnailClick, maxThumbsPerClip = 8 }) {
                     e.dataTransfer.effectAllowed = "move";
                     e.dataTransfer.setData("text/plain", clip.id);
                   }}
+                  onDoubleClick={(ev) => {
+                    ev.stopPropagation();
+                    setSelectedClipId(clip.id);
+                    setContextMenu({
+                      visible: true,
+                      x: ev.clientX,
+                      y: ev.clientY,
+                      clipId: clip.id,
+                    });
+                  }}
                   onClick={(ev) => {
                     ev.stopPropagation();
                     setSelectedClipId(clip.id);
@@ -520,6 +550,36 @@ export default function VideoTrack({ onThumbnailClick, maxThumbsPerClip = 8 }) {
                     className="resize-handle right"
                     onMouseDown={(e) => startTrim(e, clip, "right")}
                   />
+
+                  {/* DELETE BUTTON */}
+                  <button
+                    className="delete-clip-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeClip(clip.id);
+                    }}
+                    title="Delete Clip"
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      right: 0,
+                      width: 18,
+                      height: 18,
+                      background: "rgba(255,0,0,0.8)",
+                      border: "none",
+                      borderRadius: "50%",
+                      cursor: "pointer",
+                      color: "#fff",
+                      fontSize: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      zIndex: 20
+                    }}
+                  >
+                    ✕
+                  </button>
+
                 </div>
               );
             })}
@@ -555,18 +615,70 @@ export default function VideoTrack({ onThumbnailClick, maxThumbsPerClip = 8 }) {
           ➕ Drop here to create a new track
         </div>
       </div>
+      {contextMenu.visible && (
+        <div
+          className="clip-context-menu"
+          style={{
+            position: "fixed",
+            top: contextMenu.y,
+            left: contextMenu.x,
+            background: "#222",
+            borderRadius: 6,
+            padding: "6px 0",
+            minWidth: 120,
+            zIndex: 9999,
+            border: "1px solid #444",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div
+            className="menu-item"
+            onClick={() => {
+              removeClip(contextMenu.clipId);
+              setContextMenu({ visible: false, clipId: null, x: 0, y: 0 });
+            }}
+            style={{
+              padding: "6px 12px",
+              cursor: "pointer",
+              color: "white",
+              fontSize: 14,
+            }}
+            onMouseEnter={(e) => (e.target.style.background = "#444")}
+            onMouseLeave={(e) => (e.target.style.background = "transparent")}
+          >
+            ❌ Delete clip
+          </div>
+          <div
+            className="menu-item"
+            onClick={() => {
+              const clip = timeline.tracks
+                ?.flatMap(t => t.clips)
+                ?.find(c => c.id === contextMenu.clipId);
+
+              if (!clip) return;
+
+              // Toggle mute state
+              updateClip(clip.id, { muted: !clip.muted });
+              setContextMenu({ visible: false, clipId: null, x: 0, y: 0 });
+            }}
+            style={{
+              padding: "6px 12px",
+              cursor: "pointer",
+              color: "white",
+              fontSize: 14,
+            }}
+            onMouseEnter={(e) => (e.target.style.background = "#444")}
+            onMouseLeave={(e) => (e.target.style.background = "transparent")}
+          >
+            {(() => {
+              const clip = timeline.tracks
+                ?.flatMap(t => t.clips)
+                ?.find(c => c.id === contextMenu.clipId);
+              return clip?.muted ? "🔊 Unmute Audio" : "🔇 Mute Audio";
+            })()}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-

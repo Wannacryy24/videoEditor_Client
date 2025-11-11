@@ -23,36 +23,36 @@ export function TimelineProvider({ children }) {
   const [isPlaying, setIsPlaying] = useState(false);
   // ✅ Global reference to currently active <video> element (set by CanvasPreview)
   const [globalVideoRef, setGlobalVideoRef] = useState(null);
-
+  const [selectedClipId, setSelectedClipId] = useState(null);
 
   // FIXED: Toggle play/pause globally
   const togglePlayPause = useCallback(async () => {
-  const v = (globalVideoRef && globalVideoRef.current) || videoRef.current;
-  if (!v) {
-    console.log("No video element found");
-    return;
-  }
+    const v = (globalVideoRef && globalVideoRef.current) || videoRef.current;
+    if (!v) {
+      console.log("No video element found");
+      return;
+    }
 
-  await audioEngine.resumeOnUserGesture(); // ✅ FIXED
+    await audioEngine.resumeOnUserGesture(); // ✅ FIXED
 
-  if (v.paused || v.ended) {
-    v.play()
-      .then(() => {
-        console.log("Play successful");
-        audioEngine.playAll(currentTime);
-        setIsPlaying(true);
-      })
-      .catch((e) => {
-        console.error("Play failed:", e);
-        setIsPlaying(false);
-      });
-  } else {
-    v.pause();
-    audioEngine.pauseAll();
-    console.log("Pause triggered");
-    setIsPlaying(false);
-  }
-}, [globalVideoRef, currentTime]);
+    if (v.paused || v.ended) {
+      v.play()
+        .then(() => {
+          console.log("Play successful");
+          audioEngine.playAll(currentTime);
+          setIsPlaying(true);
+        })
+        .catch((e) => {
+          console.error("Play failed:", e);
+          setIsPlaying(false);
+        });
+    } else {
+      v.pause();
+      audioEngine.pauseAll();
+      console.log("Pause triggered");
+      setIsPlaying(false);
+    }
+  }, [globalVideoRef, currentTime]);
 
 
   const _getAppendPosition = useCallback((track) => {
@@ -91,85 +91,85 @@ export function TimelineProvider({ children }) {
   }, []);
 
   // PATCH for: src/context/TimelineContext.js
-// In the addClipFromLibrary function, ensure audioUrl is passed:
+  // In the addClipFromLibrary function, ensure audioUrl is passed:
 
-const addClipFromLibrary = useCallback(
-  async (libId, toTrackId, positionSeconds = null) => {
-    const libItem = mediaLibrary.find((m) => m.id === libId);
-    if (!libItem) return;
+  const addClipFromLibrary = useCallback(
+    async (libId, toTrackId, positionSeconds = null) => {
+      const libItem = mediaLibrary.find((m) => m.id === libId);
+      if (!libItem) return;
 
-    const clipId = Date.now().toString();
+      const clipId = Date.now().toString();
 
-    let duration = libItem.duration;
-    try {
-      const res = await fetch(`http://localhost:8080/metadata/${libItem.filename}`);
-      if (res.ok) {
-        const data = await res.json();
-        duration = data.duration || duration;
-      }
-    } catch (err) {
-      console.warn("Metadata fetch failed:", err);
-    }
-
-    let thumbnails = [];
-    try {
-      const res = await fetch(
-        `http://localhost:8080/thumbnails/${libItem.filename}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ count: Math.min(10, Math.floor(duration)) }),
+      let duration = libItem.duration;
+      try {
+        const res = await fetch(`http://localhost:8080/metadata/${libItem.filename}`);
+        if (res.ok) {
+          const data = await res.json();
+          duration = data.duration || duration;
         }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        thumbnails = data.thumbnails || [];
+      } catch (err) {
+        console.warn("Metadata fetch failed:", err);
       }
-    } catch (err) {
-      console.warn("Thumbnail generation failed:", err);
-    }
 
-    setTimeline((prev) => {
-      const tracksCopy = prev.tracks.map((t) => ({
-        ...t,
-        clips: [...t.clips],
-      }));
+      let thumbnails = [];
+      try {
+        const res = await fetch(
+          `http://localhost:8080/thumbnails/${libItem.filename}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ count: Math.min(10, Math.floor(duration)) }),
+          }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          thumbnails = data.thumbnails || [];
+        }
+      } catch (err) {
+        console.warn("Thumbnail generation failed:", err);
+      }
 
-      const targetTrack =
-        tracksCopy.find((t) => t.id === toTrackId) || tracksCopy[0];
+      setTimeline((prev) => {
+        const tracksCopy = prev.tracks.map((t) => ({
+          ...t,
+          clips: [...t.clips],
+        }));
 
-      const position =
-        positionSeconds != null
-          ? Math.max(0, positionSeconds)
-          : _getAppendPosition(targetTrack);
+        const targetTrack =
+          tracksCopy.find((t) => t.id === toTrackId) || tracksCopy[0];
 
-      const newClip = {
-        id: clipId,
-        src: libItem.src,
-        audioUrl: libItem.audioUrl, // ✅ ENSURE AUDIO URL IS PASSED
-        name: libItem.name,
-        type: "video",
-        start: 0,
-        end: duration,
-        position,
-        duration,
-        thumbnails,
-        diskFilename: libItem.diskFilename || libItem.id,
-        originalFilename: libItem.originalFilename,
-      };
+        const position =
+          positionSeconds != null
+            ? Math.max(0, positionSeconds)
+            : _getAppendPosition(targetTrack);
 
-      targetTrack.clips.push(newClip);
+        const newClip = {
+          id: clipId,
+          src: libItem.src,
+          audioUrl: libItem.audioUrl, // ✅ ENSURE AUDIO URL IS PASSED
+          name: libItem.name,
+          type: "video",
+          start: 0,
+          end: duration,
+          position,
+          duration,
+          thumbnails,
+          diskFilename: libItem.diskFilename || libItem.id,
+          originalFilename: libItem.originalFilename,
+        };
 
-      const allClips = tracksCopy.flatMap((t) => t.clips);
-      const newDuration = allClips.length
-        ? Math.max(...allClips.map((c) => c.position + c.duration))
-        : 0;
+        targetTrack.clips.push(newClip);
 
-      return { ...prev, tracks: tracksCopy, duration: newDuration };
-    });
-  },
-  [mediaLibrary, _getAppendPosition]
-);
+        const allClips = tracksCopy.flatMap((t) => t.clips);
+        const newDuration = allClips.length
+          ? Math.max(...allClips.map((c) => c.position + c.duration))
+          : 0;
+
+        return { ...prev, tracks: tracksCopy, duration: newDuration };
+      });
+    },
+    [mediaLibrary, _getAppendPosition]
+  );
 
   const addClip = useCallback(
     (src, duration, opts = {}) => {
@@ -348,6 +348,47 @@ const addClipFromLibrary = useCallback(
     });
   }, [timeline]);
 
+  const duplicateClip = useCallback((clipId, count = 2) => {
+  setTimeline((prev) => {
+    const tracksCopy = prev.tracks.map((t) => ({
+      ...t,
+      clips: [...t.clips],
+    }));
+
+    const track = tracksCopy[0];
+    const baseIndex = track.clips.findIndex((c) => c.id === clipId);
+    if (baseIndex === -1) return prev;
+
+    const baseClip = { ...track.clips[baseIndex] };
+    const loopsToAdd = Math.max(0, count - 1);
+
+    let nextPosition = baseClip.position + baseClip.duration;
+
+    for (let i = 0; i < loopsToAdd; i++) {
+      const newId = `${baseClip.id}_loop_${Date.now()}_${i}`;
+
+      const newClip = {
+        ...baseClip,
+        id: newId,
+        position: nextPosition,
+        start: 0,
+        end: baseClip.duration,
+        thumbnails: [...(baseClip.thumbnails || [])], // ✅ reuse thumbnails
+      };
+
+      nextPosition += baseClip.duration;
+      track.clips.splice(baseIndex + 1 + i, 0, newClip);
+    }
+
+    const allClips = tracksCopy.flatMap((t) => t.clips);
+    const newDuration = allClips.length
+      ? Math.max(...allClips.map((c) => c.position + c.duration))
+      : 0;
+
+    return { ...prev, tracks: tracksCopy, duration: newDuration };
+  });
+}, []);
+
   return (
     <TimelineContext.Provider
       value={{
@@ -372,6 +413,9 @@ const addClipFromLibrary = useCallback(
         togglePlayPause,
         globalVideoRef,      // ✅ new
         setGlobalVideoRef,   // ✅ new
+        duplicateClip,
+        selectedClipId,
+        setSelectedClipId,
       }}
     >
 

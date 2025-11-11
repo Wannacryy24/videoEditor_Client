@@ -17,14 +17,15 @@ export default function Sidebar({ activeTool, setActiveTool }) {
   const { uploadFilesToBackend } = useUploadManager(setActiveTool);
 
   const items = [
-    { id: "media", label: "Media", icon: <FaFolderOpen /> },
-    { id: "trim", label: "Trim", icon: <FaScissors /> },
-    { id: "split", label: "Split", icon: <AiOutlineSplitCells /> },
-    { id: "resize", label: "Canvas Resize", icon: <RiCustomSize /> },
-    { id: "audio", label: "Audio", icon: <FaMusic /> },
-    { id: "text", label: "Text", icon: <FaT /> },
-    { id: "settings", label: "Settings", icon: <FaGear /> },
-  ];
+  { id: "media", label: "Media", icon: <FaFolderOpen /> },
+  { id: "trim", label: "Trim", icon: <FaScissors /> },
+  { id: "split", label: "Split", icon: <AiOutlineSplitCells /> },
+  { id: "resize", label: "Canvas Resize", icon: <RiCustomSize /> },
+  { id: "audio", label: "Audio", icon: <FaMusic /> },
+  { id: "loop", label: "Loop", icon: <FiPlus /> }, 
+  { id: "text", label: "Text", icon: <FaT /> },
+  { id: "settings", label: "Settings", icon: <FaGear /> },
+];
 
   return (
     <div className="sidebar">

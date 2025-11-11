@@ -150,12 +150,19 @@ const CanvasPreview = forwardRef(
       [canvasSize]
     );
 
-    // ---- Set first clip ----
+    // ✅ Auto-select active clip by timeline time
     useEffect(() => {
-      if (track && !selectedClipId && track.clips.length > 0) {
-        setSelectedClipId(track.clips[0].id);
+      if (!track?.clips) return;
+
+      const active = track.clips.find(
+        c => effectiveCurrentTime >= c.position &&
+          effectiveCurrentTime < c.position + c.duration
+      );
+
+      if (active && active.id !== selectedClipId) {
+        setSelectedClipId(active.id);
       }
-    }, [track, selectedClipId]);
+    }, [effectiveCurrentTime, track, selectedClipId]);
 
     // ---- Global ref for other components ----
     useEffect(() => {
@@ -287,118 +294,78 @@ const CanvasPreview = forwardRef(
     }, [canvasSize, videoNatural, computeVideoDisplay]);
 
     // ---- Timeline sync ----
+    // ✅ Correct Timeline Time Sync
     useEffect(() => {
       const video = videoRef.current;
       if (!video) return;
 
-      let raf = null;
-      const tick = () => {
-        setDisplayTime(video.currentTime);
-        setTimelineCurrentTime?.(video.currentTime);
-        onTimeUpdate?.(video.currentTime);
-        raf = requestAnimationFrame(tick);
-      };
+      let frameId = null;
 
-      if (effectiveIsPlaying) {
-        raf = requestAnimationFrame(tick);
-      }
+      const sync = () => {
+        const t = video.currentTime;
+        setDisplayTime(t);
+        setTimelineCurrentTime?.(t);
+        onTimeUpdate?.(t);
 
-      return () => raf && cancelAnimationFrame(raf);
-    }, [effectiveIsPlaying, setTimelineCurrentTime, onTimeUpdate]);
-
-    // ---- Time jump sync ----
-    useEffect(() => {
-      const video = videoRef.current;
-      if (!video) return;
-
-      const handleSeek = () => {
-        if (Math.abs(video.currentTime - effectiveCurrentTime) > 0.05) {
-          video.currentTime = effectiveCurrentTime;
+        // Continue updating playhead while video is loaded
+        if (!video.ended) {
+          video.requestVideoFrameCallback(sync);
         }
       };
 
-      // Use setTimeout to avoid seek conflicts
-      const timeoutId = setTimeout(handleSeek, 50);
-
-      return () => clearTimeout(timeoutId);
-    }, [effectiveCurrentTime]);
-
-    useEffect(() => {
-      const video = videoRef.current;
-      if (!video || !effectiveIsPlaying) return;
-
-      let rAF = null;
-
-      const syncToAudio = () => {
-        // Get audio engine clock
-        const audioTime = audioEngine.getCurrentTime();
-
-        // Compute target video time based on clip offset
-        const clip = timeline?.tracks?.[0]?.clips?.[0];
-        const clipStart = clip?.position || 0;
-        const targetTime = audioTime - clipStart;
-
-        // Only correct drift > 10ms
-        if (Math.abs(video.currentTime - targetTime) > 0.01) {
-          video.currentTime = Math.max(0, targetTime);
-        }
-
-        video.requestVideoFrameCallback(syncToAudio);
-      };
-
-      video.requestVideoFrameCallback(syncToAudio);
+      video.requestVideoFrameCallback(sync);
 
       return () => {
-        if (rAF) cancelAnimationFrame(rAF);
+        if (frameId) cancelAnimationFrame(frameId);
       };
-    }, [effectiveIsPlaying, timeline]);
+    }, [effectiveIsPlaying]);
+
+    // ✅ Time Jump Sync — moves audio when video scrubs
+    useEffect(() => {
+      const v = videoRef.current;
+      if (!v) return;
+
+      const onSeeked = () => {
+        audioEngine.seekAll(v.currentTime);
+      };
+
+      v.addEventListener("seeked", onSeeked);
+      return () => v.removeEventListener("seeked", onSeeked);
+    }, []);
 
     // ---- Play / Pause ----
-    // PATCH for: src/components/CanvasPreview/CanvasPreview.jsx
-    // Replace the handleTogglePlayPause function with this:
-
     const handleTogglePlayPause = useCallback(async () => {
       const v = (globalVideoRef && globalVideoRef.current) || videoRef.current;
-      if (!v) {
-        console.log("No video element found");
-        return;
-      }
+      if (!v) return;
 
-      // Ensure AudioContext is resumed
       await audioEngine.resumeOnUserGesture();
 
       if (v.paused || v.ended) {
         try {
-          // ✅ USE BACKEND EXTRACTED AUDIO
+          // Find audio source for this clip
+          const mediaItem =
+            timeline.mediaLibrary?.find((m) => m.id === selectedClip?.id) ||
+            mediaLibrary?.find((m) => m.src === selectedClip?.src);
+
+          const audioUrl = mediaItem?.audioUrl;
+
           if (selectedClip) {
-            // Find the media library item to get audioUrl
-            const mediaItem = timeline.mediaLibrary?.find(m => m.id === selectedClip.id) ||
-              mediaLibrary?.find(m => m.src === selectedClip.src);
-
-            const audioUrl = mediaItem?.audioUrl;
-
-            console.log(`🎵 Playing clip: ${selectedClip.id}`, {
-              videoSrc: selectedClip.src,
-              audioUrl: audioUrl,
-              usingAudio: audioUrl ? 'BACKEND_EXTRACTED' : 'FALLBACK_ORIGINAL'
-            });
-
-            // Add track with backend extracted audio
             audioEngine.addTrack(selectedClip.id, selectedClip.src, {
-              start: 0,
-              end: selectedClip.duration,
+              start: selectedClip.position || 0,
+              end: (selectedClip.position || 0) + selectedClip.duration,
               volume: 1,
               muted: false,
-              audioUrl: audioUrl  // ✅ PASS EXTRACTED AUDIO URL
+              audioUrl: audioUrl,
             });
           }
 
-          // Play video (MUTED - audio handled by AudioEngine)
+          // ✅ Set master audio time to current video frame
+          const startAt = v.currentTime || 0;
+          audioEngine.seekAll(v.currentTime);
+          await audioEngine.playAll(startAt);
+
           v.muted = true;
           await v.play();
-
-          // Play clean backend audio through AudioEngine
-          audioEngine.playAll(currentTime);
 
           setTimelineIsPlaying(true);
           onPlayStatusChange?.(true);
@@ -408,16 +375,125 @@ const CanvasPreview = forwardRef(
           onPlayStatusChange?.(false);
         }
       } else {
-        // Pause video
-        v.pause();
-
-        // Pause audio through AudioEngine
+        // ✅ Freeze master clock BEFORE pausing video → no jumping on resume!
         audioEngine.pauseAll();
-
+        v.pause();
         setTimelineIsPlaying(false);
         onPlayStatusChange?.(false);
       }
-    }, [globalVideoRef, currentTime, setTimelineIsPlaying, onPlayStatusChange, selectedClip, timeline?.mediaLibrary]);
+    }, [
+      globalVideoRef,
+      videoRef,
+      setTimelineIsPlaying,
+      onPlayStatusChange,
+      selectedClip,
+      timeline?.mediaLibrary,
+      mediaLibrary,
+    ]);
+
+    // ✅ Soft audio sync loop — ONLY while playing
+    useEffect(() => {
+      const v = videoRef.current;
+      if (!v || !effectiveIsPlaying) return;
+
+      let raf;
+
+      const loop = () => {
+        const videoTime = v.currentTime;
+        const audioTime = audioEngine.getCurrentTime();
+
+        const drift = audioTime - videoTime;
+
+        // ✅ Correct drift only if noticeable (> 20ms)
+        if (Math.abs(drift) > 0.02) {
+          audioEngine.seekAll(videoTime);
+        }
+
+        raf = requestAnimationFrame(loop);
+      };
+
+      raf = requestAnimationFrame(loop);
+
+      return () => cancelAnimationFrame(raf);
+    }, [effectiveIsPlaying]);
+
+    // ✅ Auto-switch clips during playback + seamless loop handling
+    useEffect(() => {
+      const video = videoRef.current;
+      if (!video || !track || !effectiveIsPlaying) return;
+
+      // 🔒 Safety guard — auto-stop if audio engine reports stopped
+      if (!audioEngine._isPlaying) {
+        video.pause();
+        setTimelineIsPlaying(false);
+        onPlayStatusChange?.(false);
+        return;
+      }
+
+      const clips = track.clips;
+      if (!clips?.length) return;
+
+      const hasLoopedClips = clips.length > 1 &&
+        clips.every(c => c.src === clips[0].src && c.duration === clips[0].duration);
+
+      const checkClipSwitch = () => {
+        const t = video.currentTime;
+        const currentIdx = clips.findIndex(
+          c => t >= c.position - 0.01 && t < c.position + c.duration - 0.01
+        );
+
+        // ✅ If single clip (non-loop)
+        if (!hasLoopedClips) {
+          if (video.ended || t >= (clips[0]?.duration || 0) - 0.02) {
+            setTimelineIsPlaying(false);
+            onPlayStatusChange?.(false);
+            audioEngine.pauseAll();
+            return;
+          }
+        }
+
+        // ✅ If multiple identical looped clips
+        if (hasLoopedClips) {
+          const totalDuration = clips.reduce((acc, c) => acc + c.duration, 0);
+          if (t >= totalDuration - 0.02) {
+            // Wrap back to start (seamless loop)
+            video.currentTime = 0;
+            audioEngine.seekAll(0);
+          }
+        }
+
+        video.requestVideoFrameCallback(checkClipSwitch);
+      };
+
+      video.requestVideoFrameCallback(checkClipSwitch);
+
+      return () => video.cancelVideoFrameCallback?.(checkClipSwitch);
+    }, [track, effectiveIsPlaying]);
+
+    // ✅ Auto-stop both audio & video when video naturally ends
+    useEffect(() => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      const handleVideoEnded = async () => {
+        console.log("🎬 Video reached end — forcing full engine cleanup");
+        video.pause();
+
+        // Stop the AudioEngine fully — not just pause
+        await audioEngine.stopAll?.();
+        audioEngine.pauseAll();
+
+        // Hard reset timeline state
+        setTimelineIsPlaying(false);
+        onPlayStatusChange?.(false);
+
+        // Small hack: reset currentTime to end (avoids 1-frame stutter)
+        video.currentTime = video.duration;
+      };
+
+      video.addEventListener("ended", handleVideoEnded);
+      return () => video.removeEventListener("ended", handleVideoEnded);
+    }, [setTimelineIsPlaying, onPlayStatusChange]);
 
     // ---- Crop drag logic (commented out as per your code) ----
     const startDrag = (type, e) => {
@@ -491,6 +567,15 @@ const CanvasPreview = forwardRef(
         };
       }
     }, [action, onDrag, endDrag]);
+
+    // ✅ React to external timeline jumps
+    useEffect(() => {
+      const v = videoRef.current;
+      if (!v) return;
+      if (Math.abs(v.currentTime - effectiveCurrentTime) > 0.05) {
+        v.currentTime = effectiveCurrentTime;
+      }
+    }, [effectiveCurrentTime]);
 
     // ---- Crop Apply ----
     const handleApplyCrop = async () => {

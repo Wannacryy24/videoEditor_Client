@@ -13,6 +13,7 @@ import VideoTrack from "../VideoTrack";
 import { useVideo } from "../../context/VideoContext";
 import "./EditorLayout.css";
 import CanvasResize from "../CanvasResize/CanvasResize";
+import LoopControls from "../LoopControls/LoopControls";
 
 export default function EditorLayout() {
     const { timeline } = useTimeline();
@@ -100,8 +101,13 @@ export default function EditorLayout() {
                                     ⚙️ Settings coming soon...
                                 </div>
                             )}
+                            {activeTool === "loop" && (
+                                <>
+                                    <h3>🔁 Loop Video</h3>
+                                    <LoopControls />
+                                </>
+                            )}
                         </div>
-
                         <div className="capcut-canvas">
                             <CanvasPreview
                                 currentTime={currentTime}

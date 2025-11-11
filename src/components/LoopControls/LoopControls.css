@@ -1,0 +1,59 @@
+.loop-ui {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: #eee;
+  font-size: 14px;
+  background: #1d1d1d;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.placeholder {
+  padding: 14px 10px;
+  font-size: 15px;
+  text-align: center;
+  border-radius: 6px;
+  opacity: 0.7;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.label {
+  width: 90px;
+}
+
+.slider {
+  flex: 1;
+}
+
+.value {
+  width: 32px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.info {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.apply-btn {
+  background: #4caf50;
+  border: none;
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.apply-btn:hover {
+  background: #43a047;
+}
