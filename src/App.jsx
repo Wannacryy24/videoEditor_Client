@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import EditorPage from "./pages/EditorPage";
 import LandingPage from "./pages/LandingPage";
 import TeachingPage from "./pages/TeachingPage";
-import Header from "./components/Header/Header";
+import Header from "./components/header/Header";
 import "./App.css";
 import { NotificationProvider } from "./context/NotificationContext";
 
