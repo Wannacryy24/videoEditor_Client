@@ -7,6 +7,7 @@ export default function BrightnessContrastControls() {
   const [contrast, setContrast] = useState(1);     // 1 = no change
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const handleApply = async () => {
     if (!currentVideoFile) return setError("No video selected");
@@ -19,7 +20,7 @@ export default function BrightnessContrastControls() {
 
       // Handle URL or File
       if (typeof currentVideoFile === "string") {
-        const blob = await fetch(`http://localhost:8080${currentVideoFile}`).then(r => r.blob());
+        const blob = await fetch(`${API_BASE_URL}${currentVideoFile}`).then((r) => r.blob());
         videoFile = new File([blob], "currentVideo.mp4", { type: "video/mp4" });
       } else {
         videoFile = currentVideoFile;
@@ -30,7 +31,7 @@ export default function BrightnessContrastControls() {
       formData.append("brightness", brightness);
       formData.append("contrast", contrast);
 
-      const res = await fetch("http://localhost:8080/brightness-contrast", {
+      const res = await fetch(`${API_BASE_URL}/brightness-contrast`, {
         method: "POST",
         body: formData,
       });
@@ -40,9 +41,9 @@ export default function BrightnessContrastControls() {
 
       if (data && data.url) {
         // Fetch processed video and update context
-        const blob = await fetch(`http://localhost:8080${data.url}`).then(r => r.blob());
+        const blob = await fetch(`${API_BASE_URL}${data.url}`).then((r) => r.blob());
         const newFile = new File([blob], "processed.mp4", { type: "video/mp4" });
-        updateVideo(newFile, `http://localhost:8080${data.url}`);
+        updateVideo(newFile, `${API_BASE_URL}${data.url}`);
       } else {
         throw new Error("Invalid response from server");
       }

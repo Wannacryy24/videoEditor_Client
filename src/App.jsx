@@ -14,7 +14,7 @@ function AppContent() {
   // Hide Header only on /editor
   const hideHeader = location.pathname === "/editor";
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  
+
   useEffect(() => {
     const checkHealth = async () => {
       try {
@@ -23,6 +23,8 @@ function AppContent() {
         console.log("✅ Backend health:", data);
       } catch (err) {
         console.error("❌ Could not reach backend:", err);
+      }finally{
+        console.log("Backend in use:", import.meta.env.VITE_API_BASE_URL);
       }
     };
 
