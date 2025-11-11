@@ -8,23 +8,23 @@ import { useNotification } from "../context/NotificationContext";
 export function useUploadManager(setActiveTool) {
   const { addToLibrary } = useTimeline();
   const { addNotification } = useNotification();
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ auto-switch between local & prod
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  // ✅ Safely normalize any URL (handles missing colon + double base issue)
+  // ✅ Safely normalize any URL (prevents missing colon or double-domain)
   const normalizeUrl = (url) => {
     if (!url) return "";
 
-    // 🧹 Fix malformed protocol ("https//" → "https://")
-    url = url.replace(/^https\/\//, "https://").replace(/^http\/\//, "http://");
+    // Fix malformed protocol (e.g. "https//" → "https://")
+    url = url.replace(/^https\/\//i, "https://").replace(/^http\/\//i, "http://");
 
-    // 🧠 If the URL already starts with http(s), trust it — don't prepend again
-    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    // If already a full URL (http/https), return it directly
+    if (/^https?:\/\//i.test(url)) return url;
 
-    // ✅ Otherwise, prefix with API base
+    // Otherwise, prefix with backend base
     return `${API_BASE_URL}${url.startsWith("/") ? url : `/${url}`}`;
   };
 
-  // Get duration of video
+  // Get duration of video (for fallback)
   const getVideoDuration = (url) =>
     new Promise((resolve) => {
       const video = document.createElement("video");
@@ -36,10 +36,10 @@ export function useUploadManager(setActiveTool) {
 
   // Upload handler
   const uploadFilesToBackend = async (files) => {
-    if (!files || files.length === 0) return;
+    if (!files?.length) return;
 
     const formData = new FormData();
-    Array.from(files).forEach((file) => formData.append("files", file));
+    files.forEach((file) => formData.append("files", file));
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/uploads`, {
@@ -47,22 +47,21 @@ export function useUploadManager(setActiveTool) {
         body: formData,
       });
 
-      if (!res.ok) throw new Error("Upload failed");
+      if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
       const data = await res.json();
 
       if (setActiveTool) setActiveTool("media");
 
-      // ✅ Process each uploaded file
-      for (let i = 0; i < data.items.length; i++) {
-        const item = data.items[i];
-        const delay = i * 500;
-
+      // Process each uploaded file
+      data.items.forEach((item, index) => {
         setTimeout(async () => {
           const fullUrl = normalizeUrl(item.url);
           const fullAudioUrl = normalizeUrl(item.audioUrl);
 
           let duration = item.duration;
-          if (!duration || duration === 0) duration = await getVideoDuration(fullUrl);
+          if (!duration || duration === 0) {
+            duration = await getVideoDuration(fullUrl);
+          }
 
           addToLibrary(fullUrl, duration, {
             id: item.id,
@@ -75,18 +74,18 @@ export function useUploadManager(setActiveTool) {
             width: item.width,
             height: item.height,
             fps: item.fps,
-            audioUrl: fullAudioUrl, // ✅ include extracted audio
+            audioUrl: fullAudioUrl,
           });
 
-          console.log("✅ Added video:", fullUrl);
-          addNotification(`🎬 ${item.originalName} added successfully!`, "success");
-        }, delay);
-      }
+          console.log(`🎬 Added to library:`, fullUrl);
+          addNotification(`✅ ${item.originalName} uploaded successfully!`, "success");
+        }, index * 400); // slight stagger delay
+      });
 
       return true;
     } catch (err) {
-      console.error("Upload error:", err);
-      addNotification("❌ Upload failed. Check console.", "error");
+      console.error("❌ Upload error:", err);
+      addNotification(`❌ Upload failed: ${err.message}`, "error");
       return false;
     }
   };
