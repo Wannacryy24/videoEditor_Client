@@ -56,13 +56,18 @@ export default function VideoTrack({ onThumbnailClick, maxThumbsPerClip = 8 }) {
       video.preload = "metadata";
       video.muted = true;
       video.src = clip.src;
-
+      
       await new Promise((resolve, reject) => {
+        console.log("✅ Metadata loaded:", video.readyState, video.videoWidth, video.videoHeight);
         video.onloadedmetadata = resolve;
         video.onerror = reject;
       });
 
+      await new Promise(res => setTimeout(res, 300)); // ✅ small delay
+
       const duration = (clip.end || 0) - (clip.start || 0);
+
+      // const duration = (clip.end || 0) - (clip.start || 0);
       if (duration <= 0) {
         updateClip(clip.id, { thumbnails: [] });
         return;

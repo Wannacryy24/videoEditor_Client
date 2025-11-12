@@ -125,9 +125,9 @@ export function TimelineProvider({ children }) {
         }
 
         // ✅ Use libItem.src for thumbnail generation
-        const thumbUrl = libItem.src.startsWith("http")
-          ? `${libItem.src}/thumbnails`
-          : `${API_BASE_URL}/thumbnails/${libItem.src}`;
+        // const thumbUrl = libItem.src.startsWith("http")
+          const filename = libItem.src.split("/").pop();
+          const thumbUrl = `${API_BASE_URL}/thumbnails/${filename}`;
 
         const thumbRes = await fetch(thumbUrl, {
           method: "POST",
