@@ -44,56 +44,55 @@ export default function MultiUpload() {
 
   // 🔹 Upload files to backend
   const uploadFilesToBackend = async (files) => {
-    const formData = new FormData();
-    Array.from(files).forEach((file) => formData.append("files", file));
+  const formData = new FormData();
+  Array.from(files).forEach((file) => formData.append("files", file));
 
-    try {
-      setUploading(true);
-      const res = await fetch(`${API_BASE_URL}/api/uploads`, {
-        method: "POST",
-        body: formData,
+  try {
+    setUploading(true);
+    const res = await fetch(`${API_BASE_URL}/api/uploads`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) throw new Error("Upload failed");
+    const data = await res.json();
+
+    for (const item of data.items) {
+      let duration = item.duration;
+      // If duration not provided, measure manually
+      if (!duration || duration === 0)
+        duration = await getVideoDuration(item.url); // ✅ FIXED (no base prefix)
+
+      const libId = addToLibrary(item.url, duration, { // ✅ FIXED
+        id: item.id,
+        name: item.originalName,
+        backendId: item.id,
+        width: item.width,
+        height: item.height,
+        fps: item.fps,
+        hasAudio: item.hasAudio,
+        diskFilename: item.id,
+        originalFilename: item.originalName,
+        src: item.url, // ✅ FIXED
+        audioUrl: item.audioUrl, // ✅ keep as is
       });
 
-      if (!res.ok) throw new Error("Upload failed");
-      const data = await res.json();
+      addNotification(`🎬 ${item.originalName} added successfully!`, "success");
 
-      for (const item of data.items) {
-        let duration = item.duration;
-        // if (!duration || duration === 0) duration = await getVideoDuration(item.url);
-        if (!duration || duration === 0)
-          duration = await getVideoDuration(`${API_BASE_URL}${item.url}`);
-
-        const libId = addToLibrary(`${API_BASE_URL}${item.url}`, duration, {
-          id: item.id,
-          name: item.originalName,
-          backendId: item.id,
-          width: item.width,
-          height: item.height,
-          fps: item.fps,
-          hasAudio: item.hasAudio,
-          diskFilename: item.id,
-          originalFilename: item.originalName,
-          src: `${API_BASE_URL}${item.url}`,
-          audioUrl: item.audioUrl, // ✅ ensure passed
-        });
-
-        // ✅ Correct usage
-        addNotification(`🎬 ${item.originalName} added successfully!`, "success");
-
-        // ✅ Automatically load first video into canvas + timeline
-        if (mediaLibrary.length === 0) {
-          const newTrackId = await createTrackWithClip(libId, 0);
-          console.log("🎬 First clip added to timeline:", newTrackId);
-          addNotification("🎞️ First clip added to timeline!", "info");
-        }
+      // ✅ Automatically load first video into canvas + timeline
+      if (mediaLibrary.length === 0) {
+        const newTrackId = await createTrackWithClip(libId, 0);
+        console.log("🎬 First clip added to timeline:", newTrackId);
+        addNotification("🎞️ First clip added to timeline!", "info");
       }
-    } catch (err) {
-      console.error("Upload error:", err);
-      alert("Upload failed");
-    } finally {
-      setUploading(false);
     }
-  };
+  } catch (err) {
+    console.error("Upload error:", err);
+    alert("Upload failed");
+  } finally {
+    setUploading(false);
+  }
+};
 
   const handleInputChange = (e) => {
     const files = e.target.files;
