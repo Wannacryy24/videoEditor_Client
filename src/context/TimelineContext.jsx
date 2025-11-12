@@ -62,38 +62,32 @@ export function TimelineProvider({ children }) {
   }, []);
 
   const addToLibrary = useCallback((src, duration = 0, opts = {}) => {
-  const id = opts.id || `lib-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const id = opts.id || `lib-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-  // 🧹 Sanitize URL — ensure it has correct https:// protocol
-  let cleanSrc = src || "";
-  cleanSrc = cleanSrc.replace(/^https\/\//, "https://").replace(/^http\/\//, "http://");
+    // Fix malformed protocols and make full URL consistent
+    let cleanSrc = src || "";
+    cleanSrc = cleanSrc.replace(/^https\/\//, "https://").replace(/^http\/\//, "http://");
 
-  // 🧩 Extract only the filename safely (avoid full URL pollution)
-  const cleanFilename = cleanSrc.replace(/^https?:\/\//, "").split("/").pop() || "";
-
-  const item = {
-    id,
-    src: cleanSrc, // ✅ Fully-qualified URL
-    name: opts.name || `media-${id}`,
-    duration: Number(duration || 0),
-    backendId: opts.backendId || opts.id || null,
-    filename: cleanFilename, // ✅ Just the filename, not the full URL
-    audioUrl: opts.audioUrl || null,
-  };
-
-  console.log("📦 addToLibrary() — src:", cleanSrc);
-  console.log("📦 addToLibrary() — extracted filename:", cleanFilename);
-
-  setMediaLibrary((prev) => {
-    const found = prev.find((p) => p.id === id);
-    if (found) {
-      return prev.map((p) => (p.id === id ? { ...p, ...item } : p));
+    // If src is relative (starts with /uploads...), prefix API base
+    if (!/^https?:\/\//.test(cleanSrc) && API_BASE_URL) {
+      cleanSrc = `${API_BASE_URL}${cleanSrc.startsWith("/") ? "" : "/"}${cleanSrc}`;
     }
-    return [...prev, item];
-  });
 
-  return id;
-}, []);
+    const cleanFilename = cleanSrc.split("/").pop() || "";
+
+    const item = {
+      id,
+      src: cleanSrc,
+      name: opts.name || `media-${id}`,
+      duration: Number(duration || 0),
+      backendId: opts.backendId || opts.id || null,
+      filename: cleanFilename,
+      audioUrl: opts.audioUrl || null,
+    };
+
+    setMediaLibrary((prev) => [...prev.filter(p => p.id !== id), item]);
+    return id;
+  }, [API_BASE_URL]);
 
   const updateLibraryItem = useCallback((libId, updates) => {
     setMediaLibrary((prev) =>
@@ -114,21 +108,21 @@ export function TimelineProvider({ children }) {
       let thumbnails = [];
 
       try {
-        // ✅ Use libItem.src instead of filename
-        const metaUrl = libItem.src.startsWith("http")
-          ? libItem.src
-          : `${API_BASE_URL}/metadata/${libItem.src}`;
+        // get filename from libItem.src (works for URLs or plain filenames)
+        const filename = libItem.src?.split("/").pop();
+
+        // --- Metadata fetch from backend ---
+        const metaUrl = `${API_BASE_URL}/metadata/${filename}`;
         const metaRes = await fetch(metaUrl);
         if (metaRes.ok) {
           const metaData = await metaRes.json();
           duration = metaData.duration || duration;
+        } else {
+          console.warn("Metadata fetch returned", metaRes.status, await metaRes.text());
         }
 
-        // ✅ Use libItem.src for thumbnail generation
-        // const thumbUrl = libItem.src.startsWith("http")
-          const filename = libItem.src.split("/").pop();
-          const thumbUrl = `${API_BASE_URL}/thumbnails/${filename}`;
-
+        // --- Request backend to generate thumbnails ---
+        const thumbUrl = `${API_BASE_URL}/thumbnails/${filename}`;
         const thumbRes = await fetch(thumbUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -138,6 +132,8 @@ export function TimelineProvider({ children }) {
         if (thumbRes.ok) {
           const thumbData = await thumbRes.json();
           thumbnails = thumbData.thumbnails || [];
+        } else {
+          console.warn("Thumbnail generation returned", thumbRes.status, await thumbRes.text());
         }
       } catch (err) {
         console.warn("Metadata/thumbnail fetch failed:", err);

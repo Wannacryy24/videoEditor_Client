@@ -10,19 +10,35 @@ export function useUploadManager(setActiveTool) {
   const { addNotification } = useNotification();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  // ✅ Safely normalize any URL (prevents missing colon or double-domain)
+  // // ✅ Safely normalize any URL (prevents missing colon or double-domain)
+  // const normalizeUrl = (url) => {
+  //   if (!url) return "";
+
+  //   // Fix malformed protocol (e.g. "https//" → "https://")
+  //   url = url.replace(/^https\/\//i, "https://").replace(/^http\/\//i, "http://");
+
+  //   // If already a full URL (http/https), return it directly
+  //   if (/^https?:\/\//i.test(url)) return url;
+
+  //   // Otherwise, prefix with backend base
+  //   return `${API_BASE_URL}${url.startsWith("/") ? url : `/${url}`}`;
+  // };
+
+
+
   const normalizeUrl = (url) => {
-    if (!url) return "";
+  if (!url) return "";
+  // fix missing colon: https// -> https:// and http// -> http://
+  url = url.replace(/^https\/\//, "https://").replace(/^http\/\//, "http://");
 
-    // Fix malformed protocol (e.g. "https//" → "https://")
-    url = url.replace(/^https\/\//i, "https://").replace(/^http\/\//i, "http://");
+  // If it's already absolute, return it
+  if (/^https?:\/\//.test(url) || url.startsWith("data:")) return url;
 
-    // If already a full URL (http/https), return it directly
-    if (/^https?:\/\//i.test(url)) return url;
+  // Otherwise prefix with API base
+  return `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+};
 
-    // Otherwise, prefix with backend base
-    return `${API_BASE_URL}${url.startsWith("/") ? url : `/${url}`}`;
-  };
+
 
   // Get duration of video (for fallback)
   const getVideoDuration = (url) =>
