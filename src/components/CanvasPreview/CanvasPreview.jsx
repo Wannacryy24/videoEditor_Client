@@ -179,6 +179,8 @@ const CanvasPreview = forwardRef(
 
       // Only update src if it changed
       if (video.src !== selectedClip.src) {
+        console.log("🧩 normalize test input:", selectedClip.src);
+        console.log("🧩 normalize output:", normalizeUrl(selectedClip.src));
         const cleanSrc = normalizeUrl(selectedClip.src); // ✅ Fix malformed URL
         console.log("🎥 Final video URL:", cleanSrc);
         video.src = cleanSrc;

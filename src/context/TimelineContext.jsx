@@ -63,15 +63,26 @@ export function TimelineProvider({ children }) {
 
   const addToLibrary = useCallback((src, duration = 0, opts = {}) => {
   const id = opts.id || `lib-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+  // 🧹 Sanitize URL — ensure it has correct https:// protocol
+  let cleanSrc = src || "";
+  cleanSrc = cleanSrc.replace(/^https\/\//, "https://").replace(/^http\/\//, "http://");
+
+  // 🧩 Extract only the filename safely (avoid full URL pollution)
+  const cleanFilename = cleanSrc.replace(/^https?:\/\//, "").split("/").pop() || "";
+
   const item = {
     id,
-    src,
+    src: cleanSrc, // ✅ Fully-qualified URL
     name: opts.name || `media-${id}`,
     duration: Number(duration || 0),
     backendId: opts.backendId || opts.id || null,
-    filename: src?.split("/")?.pop() || "",
+    filename: cleanFilename, // ✅ Just the filename, not the full URL
     audioUrl: opts.audioUrl || null,
   };
+
+  console.log("📦 addToLibrary() — src:", cleanSrc);
+  console.log("📦 addToLibrary() — extracted filename:", cleanFilename);
 
   setMediaLibrary((prev) => {
     const found = prev.find((p) => p.id === id);
@@ -81,7 +92,7 @@ export function TimelineProvider({ children }) {
     return [...prev, item];
   });
 
-  return id; // ✅ critical — fixes undefined clip
+  return id;
 }, []);
 
   const updateLibraryItem = useCallback((libId, updates) => {
